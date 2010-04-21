@@ -4,7 +4,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 use YAML::Tiny;
-our $VERSION = '0.01';
+our $VERSION = '0.04';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -300,6 +300,7 @@ eval "__EVAL__::$1;" or warn "$1 => $@";
 }
 }
 for my $module (@$modules) {
+local $SIG{'__WARN__'} = sub { print $_[0] unless($_[0] =~ /\sredefined\sat/)};
 eval "require $module";
 my $version = $self->_version_from_module($module) or next;
 $requires->{$module} = $version;
@@ -310,7 +311,7 @@ sub manifest {
 my $self = shift;
 open my $SKIP, '>', 'MANIFEST.SKIP' or die "Write 'MANIFEST.SKIP': $!\n";
 print $SKIP "$_\n" for qw(
-^dperl.yml
+^mypp.yml
 .git
 \.old
 \.swp
@@ -330,7 +331,7 @@ $self->_vsystem(make => @_);
 }
 sub tag_and_commit {
 my $self = shift;
-$self->_vsystem(git => commit => -a => -m => $self->changes->{'latest'});
+$self->_vsystem(git => commit => -a => -m => $self->changes->{'text'});
 $self->_vsystem(git => tag => $self->changes->{'version'});
 return 1;
 }
@@ -413,6 +414,10 @@ print '
   * Create/update t/00-load.t and t/99-pod*t
   * Create/update README
 
+ -test
+  * Create/update t/00-load.t and t/99-pod*t
+  * Test the project
+
  -build
   * Same as -update
   * Update Changes with release date
@@ -423,10 +428,6 @@ print '
  -share
   * Push commit and tag to "origin"
   * Upload the disted file to CPAN
-
- -test
-  * Create/update t/00-load.t and t/99-pod*t
-  * Test the project
 
  -clean
   * Remove files and directories which should not be included
@@ -442,7 +443,7 @@ print '
 }sub _vsystem {
 shift; # shift off class/object
 print "\$ @_\n" unless $SILENT;
-system @_;
+return $SILENT ? system "@_ 1>/dev/null 2>/dev/null" : system @_;
 }
 sub _filename_to_module {
 local $_ = $_[1];
@@ -473,14 +474,20 @@ my $method = $action;
 $action =~ s/^-+//;
 $method =~ s/^-+//;
 $method =~ s/-/_/g;
-if($action =~ /^update(?!-)/i) {
+if($action eq 'update') {
 $app->clean;
 $app->update_version_info;
 $app->t_load;
 $app->t_pod;
 $app->generate_readme;
 }
-elsif($action =~ /^build(?!-)/i) {
+elsif($action eq 'test') {
+$app->clean;
+$app->t_load;
+$app->t_pod;
+$app->make('test');
+}
+elsif($action eq 'build') {
 $app->clean;
 $app->t_load;
 $app->t_pod;
@@ -488,17 +495,11 @@ $app->timestamp_to_changes;
 $app->update_version_info;
 $app->generate_readme;
 $app->manifest;
-$app->_vsystem('rm ' .$app->name .'* 2>/dev/null');
 $app->tag_and_commit;
+$app->_vsystem('rm ' .$app->name .'* 2>/dev/null');
 $app->make('dist');
 }
-elsif($action =~ /^test(?!-)/i) {
-$app->clean;
-$app->t_load;
-$app->t_pod;
-$app->make('test');
-}
-elsif($action =~ /^share(?!-)/i) {
+elsif($action eq 'share') {
 $app->share_via_extension;
 $app->share_via_git;
 }
@@ -521,7 +522,7 @@ else {
 die "Failed to execute $app->$method\n";
 }
 }
-elsif($action =~ /^-*man$/i) {
+elsif($action eq 'man') {
 if($0 eq '-') {
 print "Read manual online: http://jhthorsen.github.com/app-mypp\n"
 }

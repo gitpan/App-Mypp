@@ -51,5 +51,5 @@ while(<$BIN>) {
 }
 
 
-chmod 0555, $out_file;
+chmod 0755, $out_file;
 print "App::Mypp packed to $out_file\n";

@@ -23,4 +23,4 @@ resources:
   homepage: http://search.cpan.org/dist/App-Mypp
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhthorsen/app-mypp.git
-version: 0.03
+version: 0.04

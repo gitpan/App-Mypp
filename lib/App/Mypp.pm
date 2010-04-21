@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.03
+0.04
 
 =head1 DESCRIPTION
 
@@ -26,6 +26,10 @@ anything, so 1) it just works 2) it might not work as you want it to.
   * Create/update t/00-load.t and t/99-pod*t
   * Create/update README
 
+ -test
+  * Create/update t/00-load.t and t/99-pod*t
+  * Test the project
+
  -build
   * Same as -update
   * Update Changes with release date
@@ -36,10 +40,6 @@ anything, so 1) it just works 2) it might not work as you want it to.
  -share
   * Push commit and tag to "origin"
   * Upload the disted file to CPAN
-
- -test
-  * Create/update t/00-load.t and t/99-pod*t
-  * Test the project
 
  -clean
   * Remove files and directories which should not be included
@@ -121,7 +121,7 @@ use File::Basename;
 use File::Find;
 use YAML::Tiny;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -620,6 +620,7 @@ sub _script_requires {
     }
 
     for my $module (@$modules) {
+        local $SIG{'__WARN__'} = sub { print $_[0] unless($_[0] =~ /\sredefined\sat/)};
         eval "require $module";
         my $version = $self->_version_from_module($module) or next;
         $requires->{$module} = $version;
@@ -639,7 +640,7 @@ sub manifest {
 
     open my $SKIP, '>', 'MANIFEST.SKIP' or die "Write 'MANIFEST.SKIP': $!\n";
     print $SKIP "$_\n" for qw(
-                           ^dperl.yml
+                           ^mypp.yml
                            .git
                            \.old
                            \.swp
@@ -676,7 +677,7 @@ Will commit with the text from Changes and create a tag
 
 sub tag_and_commit {
     my $self = shift;
-    $self->_vsystem(git => commit => -a => -m => $self->changes->{'latest'});
+    $self->_vsystem(git => commit => -a => -m => $self->changes->{'text'});
     $self->_vsystem(git => tag => $self->changes->{'version'});
     return 1;
 }
@@ -826,7 +827,7 @@ sub help {
 sub _vsystem {
     shift; # shift off class/object
     print "\$ @_\n" unless $SILENT;
-    system @_;
+    return $SILENT ? system "@_ 1>/dev/null 2>/dev/null" : system @_;
 }
 
 sub _filename_to_module {

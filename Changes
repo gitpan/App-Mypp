@@ -1,5 +1,11 @@
 Revision history for App-Mypp
 
+0.04     Thu Apr 22 00:15:05 CEST 2010
+       * Fix test environment
+       * Fix git commit message
+       * Fix set $SIG{__WARN__} when loading modules from script files
+       * Add more strict command line option parser
+
 0.03     Wed Apr 21 22:43:03 CEST 2010
        * Add methods to calculate project requires to makefile
        * Add "catalyst;" to makefile when Catalyst is loaded
