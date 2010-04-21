@@ -1,0 +1,77 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Data::Dumper;
+
+eval "use App::Mypp; 1" or die "Could not load App::Mypp: $@";
+
+my $app = App::Mypp->new;
+my $action = shift @ARGV or exit $app->help;
+my $method = $action;
+
+$action =~ s/^-+//;
+$method =~ s/^-+//;
+$method =~ s/-/_/g;
+
+if($action =~ /^update(?!-)/i) {
+    $app->clean;
+    $app->update_version_info;
+    $app->t_load;
+    $app->t_pod;
+    $app->generate_readme;
+}
+elsif($action =~ /^build(?!-)/i) {
+    $app->clean;
+    $app->t_load;
+    $app->t_pod;
+    $app->timestamp_to_changes;
+    $app->update_version_info;
+    $app->generate_readme;
+    $app->manifest;
+    $app->_vsystem('rm ' .$app->name .'* 2>/dev/null');
+    $app->tag_and_commit;
+    $app->make('dist');
+}
+elsif($action =~ /^test(?!-)/i) {
+    $app->clean;
+    $app->t_load;
+    $app->t_pod;
+    $app->make('test');
+}
+elsif($action =~ /^share(?!-)/i) {
+    $app->share_via_extension;
+    $app->share_via_git;
+}
+elsif($app->can($method)) {
+    if(my $res = $app->$method(@ARGV)) {
+        if(ref $res) {
+            local $Data::Dumper::Indent = 1;
+            local $Data::Dumper::Sortkeys = 1;
+            local $Data::Dumper::Terse = 1;
+            print Dumper $res;
+        }
+        elsif($res eq '1') {
+            exit 0;
+        }
+        else {
+            print $res, "\n";
+        }
+    }
+    else {
+        die "Failed to execute $app->$method\n";
+    }
+}
+elsif($action =~ /^-*man$/i) {
+    if($0 eq '-') {
+        print "Read manual online: http://jhthorsen.github.com/app-mypp\n"
+    }
+    else {
+        exec perldoc => $0;
+    }
+}
+else {
+    exit $app->help;
+}
+
+exit 0;

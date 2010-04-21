@@ -1,0 +1,226 @@
+NAME
+    App::Mypp - Maintain Your Perl Project
+
+VERSION
+    0.03
+
+DESCRIPTION
+    mypp is a result of me getting tired of doing the same stuff - or rather
+    forgetting to do the same stuff for each of my perl projects. mypp does
+    not feature the same things as Dist::Zilla, but I would like to think of
+    mypp VS dzil as CPAN vs cpanm - or at least that is what I'm aming for.
+    (!) What I don't want to do, is to configure anything, so 1) it just
+    works 2) it might not work as you want it to.
+
+SYNOPSIS
+     Usage mypp [option]
+
+     -update
+      * Update version information in main module
+      * Create/update t/00-load.t and t/99-pod*t
+      * Create/update README
+
+     -build
+      * Same as -update
+      * Update Changes with release date
+      * Create MANIFEST* and META.yml
+      * Tag and commit the changes (locally)
+      * Build a distribution (.tar.gz)
+
+     -share
+      * Push commit and tag to "origin"
+      * Upload the disted file to CPAN
+
+     -test
+      * Create/update t/00-load.t and t/99-pod*t
+      * Test the project
+
+     -clean
+      * Remove files and directories which should not be included
+        in the project repo
+
+     -makefile
+      * Create a Makefile.PL from plain guesswork
+
+     -man
+      * Display manual for mypp
+
+SAMPLE CONFIG FILE
+     ---
+     # Default to a converted version of top_module
+     name: Foo-Bar
+ 
+     # Default to a converted version of the project folder
+     # Example: ./foo-bar/lib/Foo/Bar.pm, were "foo-bar" is the
+     # project folder.
+     top_module: lib/Foo/Bar.pm 
+ 
+     # Default to a converted version of top_module.
+     top_module_name: Foo::Bar 
+ 
+     # Default to CPAN::Uploader. Can also be set through
+     # MYPP_SHARE_MODULE environment variable.
+     share_extension: AnyModuleName
+ 
+     # Not in use if share_extension == CPAN::Uploader. Usage:
+     # share_extension->upload_file($dist_file, share_params);
+     share_params: [ { answer: 42 } ]
+
+    All config params are optional, since mypp will probably figure out the
+    information for you.
+
+SHARING THE MODULE
+    By default the CPAN::Uploader module is used to upload the module to
+    CPAN. This module will use the information from "$HOME/.pause" to find
+    login information:
+
+     user your_pause_username
+     password your_secret_pause_password
+
+    It will also use git to push changes and tag a new release:
+
+     git commit -a -m "$message_from_changes_file"
+     git tag "$latest_version_in_changes_file"
+     git push origin $current_branch
+     git push --tags origin
+
+    The commit and tag is done when on "-dist", while pushing the changes to
+    origin is done on "-share".
+
+Changes
+    The expected format in "Changes" is:
+
+     Some random header, for Example:
+     Revision history for Foo-Bar
+
+     0.02
+      * Fix something
+      * Add something else
+
+     0.01 Tue Apr 20 19:34:15 CEST 2010
+      * First release
+      * Add some feature
+
+    "mypp" will automatically add the date before creating a dist.
+
+ATTRIBUTES
+  config
+     $hash = $self->config;
+
+    Holds the config from "mypp.yml" or "MYPP_CONFIG" environment variable.
+
+  name
+    Holds the project name. The project name is extracted from the
+    "top_module", unless set in config file. Example: "foo-bar".
+
+  top_module
+    Holds the top module location. This path is extracted from either "name"
+    in config file or the basename of the project. Example value:
+    "lib/Foo/Bar.pm".
+
+    The project might look like this:
+
+     ./foo-bar/lib/Foo/Bar.pm
+
+    Where "foo-bar" is the basename.
+
+  top_module_name
+    Returns the top module name, extracted from "top_module". Example value:
+    "Foo::Bar".
+
+  changes
+    Holds the latest information from "Changes". Example:
+
+     {
+       text => qq(0.03 .... \n * Something has changed),
+       version => 0.03,
+     }
+
+  dist_file
+    Returns the name of the target dist file.
+
+  pause_info
+    Holds information from "$HOME/.pause". See CPAN::Uploader for details.
+    Example:
+
+     {
+       user => 'johndoe',
+       password => 's3cret',
+     }
+
+  share_extension
+    Holds the classname of the module which should be used for sharing. This
+    value can either come from config file, "MYPP_SHARE_MODULE" environment
+    variable or fallback to CPAN::Uploader.
+
+  share_params
+    This attribute must hold an array-ref, since it is deflated as a list
+    when used as arguments to "share_extension"'s "upload_file()" method.
+
+METHODS
+  new
+     $self = App::Mypp->new;
+
+  timestamp_to_changes
+    Will insert a timestamp in Changes on the first line looking like this:
+
+     ^\d+\.[\d_]+\s*$
+
+  update_version_info
+    Will update version in top module, with the latest version from
+    "Changes".
+
+  generate_readme
+    Will generate a "README" file from the plain old documentation in top
+    module.
+
+  clean
+    Will remove all files which should not be part of your repo.
+
+  makefile
+    Will create a Makefile.PL, unless it already exists.
+
+  requires(lib|t)
+    Will search for required modules in either the "lib/" or "t/" directory.
+
+  manifest
+    Will create MANIFEST and MANIFEST.SKIP.
+
+  make($what);
+    Will create "Makefile.PL", unless already exists, then run perl on the
+    make script, and then execute "make $what".
+
+  tag_and_commit
+    Will commit with the text from Changes and create a tag
+
+  share_via_git
+    Will use git and push changes and tags to "origin". The changes will be
+    pushed to the currently active branch.
+
+  share_via_extension
+    Will use "share_extension" module and upload the dist file.
+
+  t_pod
+    Will create "t/99-pod-coverage.t" and "t/99-pod.t".
+
+  t_load
+    Will create "t/00-load.t".
+
+  help
+    Will display "SYNOPSIS".
+
+SEE ALSO
+    App::Cpanminus, Dist::Zilla, <http://jhthorsen.github.com/app-mypp>.
+
+BUGS
+    Report bugs and issues at <http://github.com/jhthorsen/app-mypp/issues>.
+
+COPYRIGHT & LICENSE
+    Copyright 2007 Jan Henning Thorsen, all rights reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
+AUTHOR
+    Jan Henning Thorsen, "jhthorsen at cpan.org"
+

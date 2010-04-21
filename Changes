@@ -1,0 +1,27 @@
+Revision history for App-Mypp
+
+0.03     Wed Apr 21 22:43:03 CEST 2010
+       * Add methods to calculate project requires to makefile
+       * Add "catalyst;" to makefile when Catalyst is loaded
+       * Add "# script_install" as a reminder
+
+0.02     Tue Apr 20 23:58:48 CEST 2010
+       * Add bin/mypp
+       * Add script/pack-mypp.pl
+
+0.01     Tue Apr 20 21:58:22 CEST 2010
+       * Add timestamp_to_changes()
+       * Add update_version_info()
+       * Add generate_readme()
+       * Add make()
+       * Add clean()
+       * Add manifest()
+       * Add makefile()
+       * Add t_pod() and t_load()
+       * Add tag_and_commit()
+       * Add share_via_git() and share_via_extension()
+       * Add help()
+
+0.00     Tue Apr 20 20:55:19 CEST 2010
+       * Init repo
+
