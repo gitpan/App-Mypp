@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.05
+0.05_01
 
 =head1 DESCRIPTION
 
@@ -124,7 +124,7 @@ use File::Basename;
 use File::Find;
 use YAML::Tiny;
 
-our $VERSION = '0.05';
+our $VERSION = '0.05_01';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';

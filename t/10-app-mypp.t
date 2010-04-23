@@ -21,6 +21,7 @@ plan tests =>
 
 $App::Mypp::SILENT = 1;
 $App::Mypp::PAUSE_FILENAME = 'pause.info';
+$Foo::Share::Module::INPUT = 0; # Name "Foo::Share::Module::INPUT" used only once: possible typo
 my $app;
 
 chdir 't/my-test-project/' or die $!;

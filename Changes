@@ -1,5 +1,9 @@
 Revision history for App-Mypp
 
+0.05_01  Fri Apr 23 13:41:55 CEST 2010
+       * Fix requires in Makefile.PL
+       * Change homepage in Makefile.PL
+
 0.05     Fri Apr 23 12:02:56 CEST 2010
        * Fix _version_from_module() returns module name and version
        * Fix split result from meta->roles and meta->get_roles
