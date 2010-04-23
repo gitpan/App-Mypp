@@ -436,6 +436,9 @@ print '
  -makefile
   * Create a Makefile.PL from plain guesswork
 
+ -version
+  * Display the version number for for mypp
+
  -man
   * Display manual for mypp
 
@@ -521,6 +524,9 @@ print $res, "\n";
 else {
 die "Failed to execute $app->$method\n";
 }
+}
+elsif($action eq 'version') {
+print "App-Mypp version: ", $App::Mypp::VERSION, "\n";
 }
 elsif($action eq 'man') {
 if($0 eq '-') {

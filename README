@@ -2,7 +2,7 @@ NAME
     App::Mypp - Maintain Your Perl Project
 
 VERSION
-    0.04
+    0.05
 
 DESCRIPTION
     mypp is a result of me getting tired of doing the same stuff - or rather
@@ -41,6 +41,9 @@ SYNOPSIS
 
      -makefile
       * Create a Makefile.PL from plain guesswork
+
+     -version
+      * Display the version number for for mypp
 
      -man
       * Display manual for mypp

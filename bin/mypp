@@ -62,6 +62,9 @@ elsif($app->can($method)) {
         die "Failed to execute $app->$method\n";
     }
 }
+elsif($action eq 'version') {
+    print "App-Mypp version: ", $App::Mypp::VERSION, "\n";
+}
 elsif($action eq 'man') {
     if($0 eq '-') {
         print "Read manual online: http://jhthorsen.github.com/app-mypp\n"

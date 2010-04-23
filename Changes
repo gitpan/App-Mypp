@@ -1,5 +1,13 @@
 Revision history for App-Mypp
 
+0.05     Fri Apr 23 12:02:56 CEST 2010
+       * Fix _version_from_module() returns module name and version
+       * Fix split result from meta->roles and meta->get_roles
+         - might return "ModuleOne|ModuleTwo"
+       * Add --version support
+       * Change requires() use "use $module" instead of "require $file"
+         - Seems to be more robust for complex systems
+
 0.04     Thu Apr 22 00:15:05 CEST 2010
        * Fix test environment
        * Fix git commit message
