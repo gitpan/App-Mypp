@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.05_01
+0.06
 
 =head1 DESCRIPTION
 
@@ -122,9 +122,8 @@ use warnings;
 use Cwd;
 use File::Basename;
 use File::Find;
-use YAML::Tiny;
 
-our $VERSION = '0.05_01';
+our $VERSION = '0.06';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -165,7 +164,24 @@ Holds the config from C<mypp.yml> or C<MYPP_CONFIG> environment variable.
 
 _attr config => sub {
     my $self = shift;
-    my $config = YAML::Tiny->read( $ENV{'MYPP_CONFIG'} || 'mypp.yml' );
+    my $file = $ENV{'MYPP_CONFIG'} || 'mypp.yml';
+    my $config;
+
+    return {} unless(-e $file);
+
+    eval "use YAML::Tiny; 1;" or do {
+        die <<"ERROR";
+
+YAML::Tiny is not installed, meaning '$file' will not be read.
+Use one of the commands below to install it:
+
+\$ aptitude install libyaml-tiny-perl
+\$ wget -q http://xrl.us/cpanm -O - | perl - YAML::Tiny
+
+ERROR
+    };
+
+    $config = YAML::Tiny->read($file);
 
     return $config->[0] if($config and $config->[0]);
     return {};
@@ -421,13 +437,18 @@ sub update_version_info {
     my $version = $self->changes->{'version'};
     my $top_module_text;
 
-    open my $MODULE, '+<', $top_module or die "Read/write '$top_module': $!\n";
-    { local $/; $top_module_text = <$MODULE> };
+    {
+        open my $MODULE, '<', $top_module or die "Read '$top_module': $!\n";
+        { local $/; $top_module_text = <$MODULE> };
+    }
+
     $top_module_text =~ s/=head1 VERSION.*?\n=/=head1 VERSION\n\n$version\n\n=/s;
     $top_module_text =~ s/^((?:our)?\s*\$VERSION)\s*=.*$/$1 = '$version';/m;
 
-    seek $MODULE, 0, 0;
-    print $MODULE $top_module_text;
+    {
+        open my $MODULE, '>', $top_module or die "Write '$top_module': $!\n";
+        print $MODULE $top_module_text;
+    }
 
     print "Update version in '$top_module' to $version\n" unless $SILENT;
 
@@ -742,6 +763,7 @@ Will create C<t/99-pod-coverage.t> and C<t/99-pod.t>.
 sub t_pod {
     my $self = shift;
 
+    mkdir 't';
     open my $POD_COVERAGE, '>', 't/99-pod-coverage.t' or die "Write 't/99-pod-coverage.t': $!\n";
 
     print $POD_COVERAGE $self->_t_header;
@@ -782,6 +804,7 @@ sub t_load {
         push @modules, $File::Find::name;
     }, 'lib');
 
+    mkdir 't';
     open my $USE_OK, '>', 't/00-load.t' or die "Write 't/00-load.t': $!\n";
 
     print $USE_OK $self->_t_header;

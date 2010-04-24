@@ -4,6 +4,8 @@ use lib q(lib);
 use Test::More;
 use App::Mypp;
 
+-d '.git' or plan skip_all => 'cannot run test without .git repo';
+
 plan tests =>
       1
     + 10 # attributes
@@ -16,8 +18,6 @@ plan tests =>
     + 4 # share_via_extension
     + 2 # git
 ;
-
--d '.git' or BAIL_OUT 'cannot run test without .git repo';
 
 $App::Mypp::SILENT = 1;
 $App::Mypp::PAUSE_FILENAME = 'pause.info';
@@ -44,7 +44,7 @@ eval { # attributes
     is(ref $app->_eval_package_requires, 'ARRAY', '_eval_package_requires returned ARRAY');
 
     1;
-} or diag $@;
+} or diag "attributes failed: $@";
 
 eval {
     my %req;
@@ -56,7 +56,7 @@ eval {
     is_deeply([sort keys %req], [qw/Test::More/], 't/ requires ok');
 
     1;
-} or diag $@;
+} or diag "requires failed: $@";
 
 eval { # timestamp_to_changes, update_version_info, generate_readme, clean
     my $date = qx/date/;
@@ -84,7 +84,7 @@ eval { # timestamp_to_changes, update_version_info, generate_readme, clean
     ok(!-e 'MANIFEST', 'MANIFEST got cleaned');
 
     1;
-} or diag $@;
+} or diag "timestamp_to_changes/update_version_info/generate_readme/clean failed: $@";
 
 eval {
     local $INC{'Catalyst.pm'} = 1;
@@ -102,13 +102,13 @@ eval {
     #like($makefile, qr{repository q\(git://github.com/\);}, 'repository is part of Makefile.PL');
 
     1;
-} or diag $@;
+} or diag "makefile failed: $@";
 
 eval {
     ok($app->manifest, 'manifest() succeeded');
     ok(-e 'MANIFEST', 'MANIFEST exists');
     ok(-e 'MANIFEST.SKIP', 'MANIFEST.SKIP exists');
-} or diag $@;
+} or diag "manifest failed: $@";
 
 eval {
     ok($app->t_load, 't_load() succeeded');
@@ -118,7 +118,7 @@ eval {
     ok(-e 't/99-pod-coverage.t', 't/99-pod-coverage.t created');
 
     1;
-} or diag $@;
+} or diag "create test failed: $@";
 
 eval {
     is(ref $app->pause_info, 'HASH', 'pause_info is a hashref');
@@ -126,7 +126,7 @@ eval {
     is($app->pause_info->{'password'}, 's3cret', 'pause_info->password is set');
 
     1;
-} or diag $@;
+} or diag "pause info failed: $@";
 
 eval {
     is($app->share_extension, 'CPAN::Uploader', 'share_extension has default value');
@@ -146,7 +146,7 @@ eval {
     is_deeply($Foo::Share::Module::INPUT, ['Foo::Share::Module', 'My-Test-Project-0.01.tar.gz'], 'Foo::Share::Module->upload_file was called');
 
     1;
-} or diag $@;
+} or diag "share: $@";
 
 TODO: {
     todo_skip 'need to override git', 2;

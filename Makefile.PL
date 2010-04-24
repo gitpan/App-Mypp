@@ -6,9 +6,9 @@ all_from q(lib/App/Mypp.pm);
 requires q(Cwd) => 3.3;
 requires q(File::Basename) => 2.7;
 requires q(File::Find) => 1.1;
-requires q(YAML::Tiny) => 1.4;
 
-test_requires q(Test::More) => 0.94;
+test_requires q(YAML::Tiny) => 1.4;
+test_requires q(Test::More) => 0.9;
 
 bugtracker q(http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp);
 homepage q(http://jhthorsen.github.com/app-mypp);

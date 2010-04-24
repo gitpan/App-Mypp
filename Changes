@@ -1,5 +1,12 @@
 Revision history for App-Mypp
 
+0.06     Sat Apr 24 23:06:16 CEST 2010
+       * Change YAML::Tiny is only required if config file exists
+       * Fix "t" directory will be create unless exists
+       * Fix extra info in top module after version update.
+         Seems like open '>+' mode didn't work quite as hoped
+       * Fix cpan tester report: change plan instead of bail out
+
 0.05_01  Fri Apr 23 13:41:55 CEST 2010
        * Fix requires in Makefile.PL
        * Change homepage in Makefile.PL
