@@ -1,7 +1,7 @@
 ---
 abstract: 'Maintain Your Perl Project'
 author:
-  - 'Jan Henning Thorsen, all rights reserved.'
+  - '-2010 Jan Henning Thorsen, all rights reserved.'
 build_requires:
   ExtUtils::MakeMaker: 6.42
   Test::More: 0.9
@@ -28,4 +28,4 @@ resources:
   homepage: http://jhthorsen.github.com/app-mypp
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhthorsen/app-mypp.git
-version: 0.06
+version: 0.07

@@ -6,16 +6,24 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.06
+0.07
 
 =head1 DESCRIPTION
 
 mypp is a result of me getting tired of doing the same stuff - or
-rather forgetting to do the same stuff for each of my perl projects.
-mypp does not feature the same things as Dist::Zilla, but I would
-like to think of mypp VS dzil as CPAN  vs cpanm - or at least that
-is what I'm aming for. (!) What I don't want to do, is to configure
-anything, so 1) it just works 2) it might not work as you want it to.
+rather forgetting to do the same stuff - for each of my Perl projects.
+mypp does not feature the same things as L<Dist::Zilla>, but I would
+like to think of mypp vs dzil as cpanm vs CPAN - or at least that
+is what I'm aiming for. (!) What I don't want to do is configure
+anything, so 1) it should just work 2) it might not work as you want it to.
+
+Want to try it out? Run the line below in your favourite terminal:
+
+ wget -q http://github.com/jhthorsen/app-mypp/raw/master/script/mypp-packed -O - | perl -
+
+Running that line will start the experimental code from github - meaning
+the latest release. Run at own risk - and don't forget to put your files
+under version control first!
 
 =head1 SYNOPSIS
 
@@ -23,11 +31,11 @@ anything, so 1) it just works 2) it might not work as you want it to.
 
  -update
   * Update version information in main module
-  * Create/update t/00-load.t and t/99-pod*t
+  * Create/update t/00-load.t and t/00-pod*t
   * Create/update README
 
  -test
-  * Create/update t/00-load.t and t/99-pod*t
+  * Create/update t/00-load.t and t/00-pod*t
   * Test the project
 
  -build
@@ -76,27 +84,26 @@ anything, so 1) it just works 2) it might not work as you want it to.
  # share_extension->upload_file($dist_file, share_params);
  share_params: [ { answer: 42 } ]
 
-All config params are optional, since mypp will probably figure out the
+All config params are optional, since mypp tries to figure out the
 information for you.
 
 =head1 SHARING THE MODULE
 
 By default the L<CPAN::Uploader> module is used to upload the module to CPAN.
-This module will use the information from C<$HOME/.pause> to find login
-information:
+This module uses C<$HOME/.pause> to find login details:
 
  user your_pause_username
  password your_secret_pause_password
 
-It will also use git to push changes and tag a new release:
+It also uses git to push changes and tag a new release:
 
  git commit -a -m "$message_from_changes_file"
  git tag "$latest_version_in_changes_file"
  git push origin $current_branch
  git push --tags origin
 
-The commit and tag is done when on C<-dist>, while pushing the changes to
-origin is done on C<-share>.
+The commit and tagging is done with C<-dist>, while pushing the changes to
+origin is done with C<-share>.
 
 =head1 Changes
 
@@ -113,7 +120,7 @@ The expected format in C<Changes> is:
   * First release
   * Add some feature
 
-C<mypp> will automatically add the date before creating a dist.
+C<mypp> automatically adds the date before creating a dist.
 
 =cut
 
@@ -123,7 +130,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -208,7 +215,7 @@ _from_config name => sub {
 =head2 top_module
 
 Holds the top module location. This path is extracted from either
-C<name> in config file or the basename of the project. Example value:
+C<name> in the config file or the basename of the project. Example value:
 C<lib/Foo/Bar.pm>.
 
 The project might look like this:
@@ -343,12 +350,12 @@ _attr pause_info => sub {
 =head2 share_extension
 
 Holds the classname of the module which should be used for sharing. This
-value can either come from config file, C<MYPP_SHARE_MODULE> environment
-variable or fallback to L<CPAN::Uploader>.
+value can either come from the config file or the C<MYPP_SHARE_MODULE> environment
+variable, or fallback to L<CPAN::Uploader>.
 
 =cut
 
-_from_config share_extension => sub {
+_attr share_extension => sub {
     my $self = shift;
 
     return $ENV{'MYPP_SHARE_MODULE'} if($ENV{'MYPP_SHARE_MODULE'});
@@ -358,17 +365,38 @@ _from_config share_extension => sub {
 
 =head2 share_params
 
-This attribute must hold an array-ref, since it is deflated as a list when
-used as arguments to L</share_extension>'s C<upload_file()> method.
+This attribute must hold an array ref, since it is flattened into a list when
+used as an argument to L</share_extension>'s C<upload_file()> method.
 
 =cut
 
 _from_config share_params => sub {
-    my $self = shift;
-    return $self->config->{'share_params'} if($self->config->{'share_params'});
     return;
 };
 
+=head2 perl5lib
+
+This attribute holds an array-ref of optional C<PERL5LIB> directories, which
+should be included in generated files and prepended to L<@INC> while
+executing this script.
+
+=cut
+
+_attr perl5lib => sub {
+    my $self = shift;
+    my $inc = $self->config->{'perl5lib'};
+
+    if(!$inc) {
+        $inc = [];
+    }
+    elsif(ref $inc ne 'ARRAY') {
+        $inc = [ split /:/, $inc ];
+    }
+
+    push @$inc, split /:/, $ENV{'PERL5LIB'} if($ENV{'PERL5LIB'});
+
+    return $inc;
+};
 
 _attr _eval_package_requires => sub {
     eval q(package __EVAL__;
@@ -394,12 +422,18 @@ _attr _eval_package_requires => sub {
 =cut
 
 sub new {
-    return bless {}, __PACKAGE__;
+    my $class = shift;
+    my $self = bless {}, $class;
+
+    $ENV{'PERL5LIB'} = join ':', @{ $self->perl5lib };
+    unshift @INC, @{ $self->perl5lib };
+
+    return $self;
 }
 
 =head2 timestamp_to_changes
 
-Will insert a timestamp in Changes on the first line looking like this:
+Inserts a timestamp in C<Changes> on the first line looking like this:
 
  ^\d+\.[\d_]+\s*$
 
@@ -427,7 +461,7 @@ sub timestamp_to_changes {
 
 =head2 update_version_info
 
-Will update version in top module, with the latest version from C<Changes>.
+Updates version in the top module, with the latest version from C<Changes>.
 
 =cut
 
@@ -457,7 +491,7 @@ sub update_version_info {
 
 =head2 generate_readme
 
-Will generate a C<README> file from the plain old documentation in top
+Generates a C<README> file from the plain old documentation in top
 module.
 
 =cut
@@ -471,7 +505,7 @@ sub generate_readme {
 
 =head2 clean
 
-Will remove all files which should not be part of your repo.
+Removes all files which should not be part of your repo.
 
 =cut
 
@@ -488,6 +522,7 @@ sub clean {
             Makefile.old
             MANIFEST*
             META.yml
+            MYMETA.yml
         ),
     ));
 
@@ -496,7 +531,7 @@ sub clean {
 
 =head2 makefile
 
-Will create a Makefile.PL, unless it already exists.
+Creates a C<Makefile.PL>, unless it already exists.
 
 =cut
 
@@ -547,7 +582,7 @@ sub makefile {
 
 =head2 requires(lib|t)
 
-Will search for required modules in either the C<lib/> or C<t/> directory.
+Searches for required modules in either the C<lib/> or C<t/> directory.
 
 =cut
 
@@ -655,7 +690,7 @@ sub _script_requires {
 
 =head2 manifest
 
-Will create MANIFEST and MANIFEST.SKIP.
+Creates C<MANIFEST> and C<MANIFEST.SKIP>.
 
 =cut
 
@@ -681,7 +716,7 @@ sub manifest {
 
 =head2 make($what);
 
-Will create C<Makefile.PL>, unless already exists, then run perl on the
+Creates C<Makefile.PL>, unless it already exists, then run perl on the
 make script, and then execute C<make $what>.
 
 =cut
@@ -695,7 +730,7 @@ sub make {
 
 =head2 tag_and_commit
 
-Will commit with the text from Changes and create a tag
+Commits with the text from C<Changes> and create a tag.
 
 =cut
 
@@ -708,7 +743,7 @@ sub tag_and_commit {
 
 =head2 share_via_git
 
-Will use git and push changes and tags to "origin". The changes will be
+Uses git to push changes and tags to "origin". The changes are
 pushed to the currently active branch.
 
 =cut
@@ -727,7 +762,7 @@ sub share_via_git {
 
 =head2 share_via_extension
 
-Will use L</share_extension> module and upload the dist file.
+Uses the L</share_extension> module and upload the dist file.
 
 =cut
 
@@ -756,39 +791,42 @@ sub share_via_extension {
 
 =head2 t_pod
 
-Will create C<t/99-pod-coverage.t> and C<t/99-pod.t>.
+Create/update C<t/99-pod-coverage.t> and C<t/99-pod.t> or
+C<t/00-pod-coverage.t> and C<t/00-pod.t>.
+
+(Doesn't make any sense to wait with the pod tests to step 99)
 
 =cut
 
 sub t_pod {
     my $self = shift;
+    my $coverage = -e 't/99-pod-coverage.t' ? 't/99-pod-coverage.t' : 't/00-pod-coverage.t';
+    my $pod = -e 't/99-pod.t' ? 't/99-pod.t' : 't/00-pod.t';
 
     mkdir 't';
-    open my $POD_COVERAGE, '>', 't/99-pod-coverage.t' or die "Write 't/99-pod-coverage.t': $!\n";
 
+    open my $POD_COVERAGE, '>', $coverage or die "Write '$coverage': $!\n";
     print $POD_COVERAGE $self->_t_header;
     print $POD_COVERAGE <<'TEST';
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
 all_pod_coverage_ok();
 TEST
+    print "Wrote t/$coverage\n" unless $SILENT;
 
-    print "Wrote t/99-pod-coverage.t\n" unless $SILENT;
-
-    open my $POD, '>', 't/99-pod.t' or die "Write 't/99-pod.t': $!\n";
+    open my $POD, '>', $pod or die "Write '$pod': $!\n";
     print $POD $self->_t_header;
     print $POD <<'TEST';
 eval 'use Test::Pod; 1' or plan skip_all => 'Test::Pod required';
 all_pod_files_ok();
 TEST
-
-    print "Wrote t/99-pod.t\n" unless $SILENT;
+    print "Wrote $pod\n" unless $SILENT;
 
     return 1;
 }
 
 =head2 t_load
 
-Will create C<t/00-load.t>.
+Creates C<t/00-load.t>.
 
 =cut
 
@@ -820,16 +858,19 @@ sub t_load {
 }
 
 sub _t_header {
-    return <<'HEADER';
-#!/usr/bin/perl
-use lib qw(lib);
+    my $self = shift;
+    my @lib = ('lib', @{ $self->perl5lib });
+
+    return <<"HEADER";
+#!/usr/bin/env perl
+use lib qw(@lib);
 use Test::More;
 HEADER
 }
 
 =head2 help
 
-Will display L</SYNOPSIS>.
+Displays L</SYNOPSIS>.
 
 =cut
 
@@ -880,9 +921,17 @@ sub _version_from_module {
 
 =head1 SEE ALSO
 
-L<App::Cpanminus>,
-L<Dist::Zilla>,
-L<http://jhthorsen.github.com/app-mypp>.
+=over
+
+=item * L<App::Cpanminus>
+
+=item * L<Dist::Zilla>
+
+=item * L<Shipit>
+
+=item * L<http://jhthorsen.github.com/app-mypp>
+
+=back
 
 =head1 BUGS
 
@@ -890,7 +939,7 @@ Report bugs and issues at L<http://github.com/jhthorsen/app-mypp/issues>.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2007 Jan Henning Thorsen, all rights reserved.
+Copyright 2007-2010 Jan Henning Thorsen, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself. 

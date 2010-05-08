@@ -1,11 +1,7 @@
 Revision history for App-Mypp
 
-0.07     Sun May  9 00:26:14 CEST 2010
-       * Add perl5lib attribute from config. Default to PERL5LIB and
-         is included in "use lib ..." when generating tests
-       * Add doc patch from chocolateboy
-       * Add will also delete "MYMETA.yml" on clean
-       * Change t/99*pod.t to t/00*pod.t (but will keep 99 as backcompat)
+0.06_01
+       * Merged documentation patch from chocolateboy
 
 0.06     Sat Apr 24 23:06:16 CEST 2010
        * Change YAML::Tiny is only required if config file exists

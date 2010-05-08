@@ -114,8 +114,8 @@ eval {
     ok($app->t_load, 't_load() succeeded');
     ok(-e 't/00-load.t', 't/00-load.t created');
     ok($app->t_pod, 't_load() succeeded');
-    ok(-e 't/99-pod.t', 't/99-pod.t created');
-    ok(-e 't/99-pod-coverage.t', 't/99-pod-coverage.t created');
+    ok(-e 't/00-pod.t', 't/00-pod.t created');
+    ok(-e 't/00-pod-coverage.t', 't/00-pod-coverage.t created');
 
     1;
 } or diag "create test failed: $@";
@@ -160,6 +160,6 @@ system rm => -r => qw(
     Makefile.PL
     README
     t/00-load.t
-    t/99-pod-coverage.t
-    t/99-pod.t
+    t/00-pod-coverage.t
+    t/00-pod.t
 );
