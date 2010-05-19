@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.07
+0.08
 
 =head1 DESCRIPTION
 
@@ -54,7 +54,10 @@ under version control first!
     in the project repo
 
  -makefile
-  * Create a Makefile.PL from plain guesswork
+  * Create "Makefile.PL" from plain guesswork
+
+ -changes
+  * Create "Changes" from template
 
  -version
   * Display the version number for for mypp
@@ -130,7 +133,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -279,6 +282,13 @@ _attr changes => sub {
     my $self = shift;
     my($text, $version);
 
+    unless(-e $CHANGES_FILENAME) {
+        open my $CHANGES, '>', $CHANGES_FILENAME or die "Write '$CHANGES_FILENAME': $!\n";
+        printf $CHANGES "Revision history for %s\n\n0.00\n", $self->name;
+        print $CHANGES " " x 7, "* Init repo\n\n";
+        print "Wrote $CHANGES_FILENAME\n";
+    }
+
     open my $CHANGES, '<', $CHANGES_FILENAME or die "Read '$CHANGES_FILENAME': $!\n";
 
     while(<$CHANGES>) {
@@ -376,9 +386,12 @@ _from_config share_params => sub {
 
 =head2 perl5lib
 
-This attribute holds an array-ref of optional C<PERL5LIB> directories, which
-should be included in generated files and prepended to L<@INC> while
-executing this script.
+This attribute holds an array-ref of optional perl library search
+directories. This attribute is used when setting up C<use lib> in
+generated files and will also be unshifted on C<@INC> in L</new()>
+
+NOTE! This was set by C<PERL5LIB> environment variable in prior versions,
+but this is now deprecated.
 
 =cut
 
@@ -393,7 +406,9 @@ _attr perl5lib => sub {
         $inc = [ split /:/, $inc ];
     }
 
-    push @$inc, split /:/, $ENV{'PERL5LIB'} if($ENV{'PERL5LIB'});
+    if($ENV{'PERL5LIB'}) {
+        warn 'perl5lib attribute is not set using PERL5LIB environment variable'
+    }
 
     return $inc;
 };
@@ -419,13 +434,17 @@ _attr _eval_package_requires => sub {
 
  $self = App::Mypp->new;
 
+This is the object constructor.
+
+Will use L</perl5lib> to set up C<@INC>, to search for libraries in
+optional directories.
+
 =cut
 
 sub new {
     my $class = shift;
     my $self = bless {}, $class;
 
-    $ENV{'PERL5LIB'} = join ':', @{ $self->perl5lib };
     unshift @INC, @{ $self->perl5lib };
 
     return $self;
@@ -811,7 +830,7 @@ sub t_pod {
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
 all_pod_coverage_ok();
 TEST
-    print "Wrote t/$coverage\n" unless $SILENT;
+    print "Wrote $coverage\n" unless $SILENT;
 
     open my $POD, '>', $pod or die "Write '$pod': $!\n";
     print $POD $self->_t_header;

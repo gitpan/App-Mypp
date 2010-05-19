@@ -2,7 +2,7 @@ NAME
     App::Mypp - Maintain Your Perl Project
 
 VERSION
-    0.07
+    0.08
 
 DESCRIPTION
     mypp is a result of me getting tired of doing the same stuff - or rather
@@ -48,7 +48,10 @@ SYNOPSIS
         in the project repo
 
      -makefile
-      * Create a Makefile.PL from plain guesswork
+      * Create "Makefile.PL" from plain guesswork
+
+     -changes
+      * Create "Changes" from template
 
      -version
       * Display the version number for for mypp
@@ -168,13 +171,21 @@ ATTRIBUTES
     when used as an argument to "share_extension"'s "upload_file()" method.
 
   perl5lib
-    This attribute holds an array-ref of optional "PERL5LIB" directories,
-    which should be included in generated files and prepended to @INC while
-    executing this script.
+    This attribute holds an array-ref of optional perl library search
+    directories. This attribute is used when setting up "use lib" in
+    generated files and will also be unshifted on @INC in "new()"
+
+    NOTE! This was set by "PERL5LIB" environment variable in prior versions,
+    but this is now deprecated.
 
 METHODS
   new
      $self = App::Mypp->new;
+
+    This is the object constructor.
+
+    Will use "perl5lib" to set up @INC, to search for libraries in optional
+    directories.
 
   timestamp_to_changes
     Inserts a timestamp in "Changes" on the first line looking like this:

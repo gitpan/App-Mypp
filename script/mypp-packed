@@ -1,9 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 package App::Mypp;
 use Cwd;
 use File::Basename;
 use File::Find;
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -78,6 +78,12 @@ return $self->_filename_to_module($self->top_module);
 _attr changes => sub {
 my $self = shift;
 my($text, $version);
+unless(-e $CHANGES_FILENAME) {
+open my $CHANGES, '>', $CHANGES_FILENAME or die "Write '$CHANGES_FILENAME': $!\n";
+printf $CHANGES "Revision history for %s\n\n0.00\n", $self->name;
+print $CHANGES " " x 7, "* Init repo\n\n";
+print "Wrote $CHANGES_FILENAME\n";
+}
 open my $CHANGES, '<', $CHANGES_FILENAME or die "Read '$CHANGES_FILENAME': $!\n";
 while(<$CHANGES>) {
 if($text) {
@@ -118,16 +124,28 @@ die "'user <name>' is not set in $PAUSE_FILENAME\n" unless $info->{'user'};
 die "'password <mysecret>' is not set in $PAUSE_FILENAME\n" unless $info->{'password'};
 return $info;
 };
-_from_config share_extension => sub {
+_attr share_extension => sub {
 my $self = shift;
 return $ENV{'MYPP_SHARE_MODULE'} if($ENV{'MYPP_SHARE_MODULE'});
 return $self->config->{'share_extension'} if($self->config->{'share_extension'});
 return 'CPAN::Uploader';
 };
 _from_config share_params => sub {
-my $self = shift;
-return $self->config->{'share_params'} if($self->config->{'share_params'});
 return;
+};
+_attr perl5lib => sub {
+my $self = shift;
+my $inc = $self->config->{'perl5lib'};
+if(!$inc) {
+$inc = [];
+}
+elsif(ref $inc ne 'ARRAY') {
+$inc = [ split /:/, $inc ];
+}
+if($ENV{'PERL5LIB'}) {
+warn 'PERL5LIB environment variable is not included when setting perl5lib';
+}
+return $inc;
 };
 _attr _eval_package_requires => sub {
 eval q(package __EVAL__;
@@ -143,7 +161,10 @@ sub with { push @REQUIRES, @_ }
 return \@__EVAL__::REQUIRES;
 };
 sub new {
-return bless {}, __PACKAGE__;
+my $class = shift;
+my $self = bless {}, $class;
+unshift @INC, @{ $self->perl5lib };
+return $self;
 }
 sub timestamp_to_changes {
 my $self = shift;
@@ -197,6 +218,7 @@ Makefile
 Makefile.old
 MANIFEST*
 META.yml
+MYMETA.yml
 ),
 ));
 return 1;
@@ -377,21 +399,23 @@ return 1;
 }
 sub t_pod {
 my $self = shift;
+my $coverage = -e 't/99-pod-coverage.t' ? 't/99-pod-coverage.t' : 't/00-pod-coverage.t';
+my $pod = -e 't/99-pod.t' ? 't/99-pod.t' : 't/00-pod.t';
 mkdir 't';
-open my $POD_COVERAGE, '>', 't/99-pod-coverage.t' or die "Write 't/99-pod-coverage.t': $!\n";
+open my $POD_COVERAGE, '>', $coverage or die "Write '$coverage': $!\n";
 print $POD_COVERAGE $self->_t_header;
 print $POD_COVERAGE <<'TEST';
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
 all_pod_coverage_ok();
 TEST
-print "Wrote t/99-pod-coverage.t\n" unless $SILENT;
-open my $POD, '>', 't/99-pod.t' or die "Write 't/99-pod.t': $!\n";
+print "Wrote $coverage\n" unless $SILENT;
+open my $POD, '>', $pod or die "Write '$pod': $!\n";
 print $POD $self->_t_header;
 print $POD <<'TEST';
 eval 'use Test::Pod; 1' or plan skip_all => 'Test::Pod required';
 all_pod_files_ok();
 TEST
-print "Wrote t/99-pod.t\n" unless $SILENT;
+print "Wrote $pod\n" unless $SILENT;
 return 1;
 }
 sub t_load {
@@ -415,9 +439,11 @@ print "Wrote t/00-load.t\n" unless $SILENT;
 return 1;
 }
 sub _t_header {
-return <<'HEADER';
-#!/usr/bin/perl
-use lib qw(lib);
+my $self = shift;
+my @lib = ('lib', @{ $self->perl5lib });
+return <<"HEADER";
+#!/usr/bin/env perl
+use lib qw(@lib);
 use Test::More;
 HEADER
 }
@@ -427,11 +453,11 @@ print '
 
  -update
   * Update version information in main module
-  * Create/update t/00-load.t and t/99-pod*t
+  * Create/update t/00-load.t and t/00-pod*t
   * Create/update README
 
  -test
-  * Create/update t/00-load.t and t/99-pod*t
+  * Create/update t/00-load.t and t/00-pod*t
   * Test the project
 
  -build
@@ -450,7 +476,10 @@ print '
     in the project repo
 
  -makefile
-  * Create a Makefile.PL from plain guesswork
+  * Create "Makefile.PL" from plain guesswork
+
+ -changes
+  * Create "Changes" from template
 
  -version
   * Display the version number for for mypp

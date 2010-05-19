@@ -28,4 +28,4 @@ resources:
   homepage: http://jhthorsen.github.com/app-mypp
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhthorsen/app-mypp.git
-version: 0.07
+version: 0.08
