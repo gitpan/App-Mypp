@@ -3,7 +3,7 @@ package App::Mypp;
 use Cwd;
 use File::Basename;
 use File::Find;
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -143,7 +143,7 @@ elsif(ref $inc ne 'ARRAY') {
 $inc = [ split /:/, $inc ];
 }
 if($ENV{'PERL5LIB'}) {
-warn 'PERL5LIB environment variable is not included when setting perl5lib';
+warn 'perl5lib attribute is not set using PERL5LIB environment variable'
 }
 return $inc;
 };
@@ -289,7 +289,7 @@ my @modules;
 local $SIG{'__WARN__'} = sub { print $_[0] unless($_[0] =~ /\sredefined\sat/)};
 local @INC = (sub {
 my $module = $self->_filename_to_module(pop);
-push @modules, $module if(caller(0) eq $required_module);
+push @modules, $module if(caller(0) =~ /^$required_module/);
 }, @INC);
 eval "use $required_module (); 1" or warn $@;
 return if($@);
@@ -406,7 +406,7 @@ open my $POD_COVERAGE, '>', $coverage or die "Write '$coverage': $!\n";
 print $POD_COVERAGE $self->_t_header;
 print $POD_COVERAGE <<'TEST';
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
-all_pod_coverage_ok();
+all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });
 TEST
 print "Wrote $coverage\n" unless $SILENT;
 open my $POD, '>', $pod or die "Write '$pod': $!\n";

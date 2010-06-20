@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.08
+0.09
 
 =head1 DESCRIPTION
 
@@ -133,7 +133,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -496,7 +496,7 @@ sub update_version_info {
     }
 
     $top_module_text =~ s/=head1 VERSION.*?\n=/=head1 VERSION\n\n$version\n\n=/s;
-    $top_module_text =~ s/^((?:our)?\s*\$VERSION)\s*=.*$/$1 = '$version';/m;
+    $top_module_text =~ s/^((?:our)?\s*\$VERSION)\s*=.*$/$1 = eval '$version';/m;
 
     {
         open my $MODULE, '>', $top_module or die "Write '$top_module': $!\n";
@@ -642,7 +642,7 @@ sub _pm_requires {
         local $SIG{'__WARN__'} = sub { print $_[0] unless($_[0] =~ /\sredefined\sat/)};
         local @INC = (sub {
             my $module = $self->_filename_to_module(pop);
-            push @modules, $module if(caller(0) eq $required_module);
+            push @modules, $module if(caller(0) =~ /^$required_module/);
         }, @INC);
 
         eval "use $required_module (); 1" or warn $@;
@@ -651,7 +651,8 @@ sub _pm_requires {
 
     if(my $meta = eval "$required_module\->meta") {
         if($meta->isa('Class::MOP::Class')) {
-            push @modules, $meta->superclasses, map { split /\|/, $_->name } @{ $meta->roles };
+            my $roles = $meta->can('roles') ? $meta->roles : [];
+            push @modules, $meta->superclasses, map { split /\|/, $_->name } @$roles;
         }
         else {
             push @modules, map { split /\|/, $_->name } @{ $meta->get_roles };
@@ -828,7 +829,7 @@ sub t_pod {
     print $POD_COVERAGE $self->_t_header;
     print $POD_COVERAGE <<'TEST';
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
-all_pod_coverage_ok();
+all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });
 TEST
     print "Wrote $coverage\n" unless $SILENT;
 

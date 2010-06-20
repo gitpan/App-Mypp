@@ -1,5 +1,12 @@
 Revision history for App-Mypp
 
+0.09     Sun Jun 20 20:15:52 CEST 2010
+       * Fix Class::MOP::Class does not provide the "roles" method.
+       * Fix Makefile.PL autogen: Will include modules as long as
+         matching beginning of namespace
+       * Add also_private => [A-Z_]+ to all_pod_coverage_ok()
+       * Add eval around version number
+
 0.08     Wed May 19 19:03:46 CEST 2010
        * Add Changes will be generated unless already exists
        * Deprecated setting perl5lib attribute from the PERL5LIB
