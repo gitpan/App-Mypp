@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.09
+0.10
 
 =head1 DESCRIPTION
 
@@ -133,7 +133,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 our $SILENT = $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
@@ -820,26 +820,31 @@ C<t/00-pod-coverage.t> and C<t/00-pod.t>.
 
 sub t_pod {
     my $self = shift;
+    my $force = shift || 0;
     my $coverage = -e 't/99-pod-coverage.t' ? 't/99-pod-coverage.t' : 't/00-pod-coverage.t';
     my $pod = -e 't/99-pod.t' ? 't/99-pod.t' : 't/00-pod.t';
 
     mkdir 't';
 
-    open my $POD_COVERAGE, '>', $coverage or die "Write '$coverage': $!\n";
-    print $POD_COVERAGE $self->_t_header;
-    print $POD_COVERAGE <<'TEST';
+    unless(-e $coverage and !$force) {
+        open my $POD_COVERAGE, '>', $coverage or die "Write '$coverage': $!\n";
+        print $POD_COVERAGE $self->_t_header;
+        print $POD_COVERAGE <<'TEST';
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
 all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });
 TEST
-    print "Wrote $coverage\n" unless $SILENT;
+        print "Wrote $coverage\n" unless $SILENT;
+    }
 
-    open my $POD, '>', $pod or die "Write '$pod': $!\n";
-    print $POD $self->_t_header;
-    print $POD <<'TEST';
+    unless(-e $pod and !$force) {
+        open my $POD, '>', $pod or die "Write '$pod': $!\n";
+        print $POD $self->_t_header;
+        print $POD <<'TEST';
 eval 'use Test::Pod; 1' or plan skip_all => 'Test::Pod required';
 all_pod_files_ok();
 TEST
-    print "Wrote $pod\n" unless $SILENT;
+        print "Wrote $pod\n" unless $SILENT;
+    }
 
     return 1;
 }
@@ -882,7 +887,6 @@ sub _t_header {
     my @lib = ('lib', @{ $self->perl5lib });
 
     return <<"HEADER";
-#!/usr/bin/env perl
 use lib qw(@lib);
 use Test::More;
 HEADER
