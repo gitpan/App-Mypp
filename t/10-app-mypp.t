@@ -5,13 +5,15 @@ use Test::More;
 use App::Mypp;
 
 -d '.git' or plan skip_all => 'cannot run test without .git repo';
+eval "use Catalyst::Devel; 1" or plan skip_all => 'Catalyst::Devel is required';
 
 plan tests =>
       1
     + 10 # attributes
     + 2 # requires
-    + 8 # timestamp_to_changes, update_version_info, generate_readme, clean
-    + 7 # makefile
+    + 6 # timestamp_to_changes, update_version_info, generate_readme, clean
+    + 2 # MANIFEST
+    + 8 # makefile
     + 3 # manifest
     + 5 # t_load + t_pod
     + 3 # pause_info
@@ -76,17 +78,19 @@ eval { # timestamp_to_changes, update_version_info, generate_readme, clean
 
     ok($app->generate_readme, 'generate_readme() succeeded');
     ok(-e 'README', 'README generated');
+    1;
+} or diag "timestamp_to_changes/update_version_info/generate_readme/clean failed: $@";
 
+TODO: { # MANIFEST
+    todo_skip 'Should MAINFEST get cleaned out?', 2;
     open my $MANIFEST, '>', 'MANIFEST' or die $!;
     print $MANIFEST "foo\n";
     close $MANIFEST;
     ok($app->clean, 'clean() succeeded'); # need more testing
     ok(!-e 'MANIFEST', 'MANIFEST got cleaned');
+}
 
-    1;
-} or diag "timestamp_to_changes/update_version_info/generate_readme/clean failed: $@";
-
-eval {
+eval { # makefile
     local $INC{'Catalyst.pm'} = 1;
     ok($app->makefile, 'makefile() succeeded');
     ok(-e 'Makefile.PL', 'Makefile.PL created');
@@ -99,18 +103,21 @@ eval {
     like($makefile, qr{bugtracker q\(http://rt.cpan.org/NoAuth/Bugs.html\?Dist=$name\);}, 'bugtracker is part of Makefile.PL');
     like($makefile, qr{homepage q\(http://search.cpan.org/dist/$name\);}, 'homepage is part of Makefile.PL');
     like($makefile, qr{catalyst;}, 'catalyst; is part of Makefile.PL');
-    #like($makefile, qr{repository q\(git://github.com/\);}, 'repository is part of Makefile.PL');
+    like($makefile, qr{repository q\(git:.*\);}, 'repository is part of Makefile.PL');
 
     1;
 } or diag "makefile failed: $@";
 
-eval {
+eval { # manifest
     ok($app->manifest, 'manifest() succeeded');
     ok(-e 'MANIFEST', 'MANIFEST exists');
     ok(-e 'MANIFEST.SKIP', 'MANIFEST.SKIP exists');
 } or diag "manifest failed: $@";
 
-eval {
+unlink 'MANIFEST';
+unlink 'MANIFEST.SKIP';
+
+eval { # t_load + t_pod
     ok($app->t_load, 't_load() succeeded');
     ok(-e 't/00-load.t', 't/00-load.t created');
     ok($app->t_pod, 't_load() succeeded');
@@ -120,7 +127,7 @@ eval {
     1;
 } or diag "create test failed: $@";
 
-eval {
+eval { # pause_info
     is(ref $app->pause_info, 'HASH', 'pause_info is a hashref');
     is($app->pause_info->{'user'}, 'john', 'pause_info->username is set');
     is($app->pause_info->{'password'}, 's3cret', 'pause_info->password is set');
@@ -128,7 +135,7 @@ eval {
     1;
 } or diag "pause info failed: $@";
 
-eval {
+eval { # share_via_extension
     is($app->share_extension, 'CPAN::Uploader', 'share_extension has default value');
     local $ENV{'MYPP_SHARE_MODULE'} = 'Foo::Share::Module';
     $app->{'share_extension'} = undef;
@@ -148,7 +155,7 @@ eval {
     1;
 } or diag "share: $@";
 
-TODO: {
+TODO: { # git
     todo_skip 'need to override git', 2;
     $app->tag_and_commit;
     $app->share_via_git;
@@ -160,6 +167,6 @@ system rm => -r => qw(
     Makefile.PL
     README
     t/00-load.t
-    t/00-pod-coverage.t
     t/00-pod.t
+    t/00-pod-coverage.t
 );

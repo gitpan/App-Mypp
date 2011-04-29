@@ -1,5 +1,18 @@
 Revision history for App-Mypp
 
+0.11     Fri Apr 29 21:45:27 CEST 2011
+       * Fix "mypp update" does not update version in main module
+       * Fix will execute "reset HEAD^" if "git tag" fail
+       * Fix Makefile.PL and t/10-app-mypp.t with required
+         modules
+       * Add _log() and _system() which will not print if $SILENT
+       * Add internal $SILENT variable to silence mypp
+       * Change "mypp clean" will not delete MANIFEST and MANIFEST.SKIP
+         - This may change back to the old behaviour
+       * Change t/00-load.t use Test::Compile
+       * Change t/00*t will not be overwritten unless forced
+       * Change internal _vsystem() => _system() and it may die
+
 0.10     Fri Sep 10 15:30:20 CEST 2010
        * t/00-pod*t files are only written, unless already existing
          or by force: "mypp --t-pod force"

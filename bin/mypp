@@ -16,7 +16,6 @@ $method =~ s/-/_/g;
 
 if($action eq 'update') {
     $app->clean;
-    $app->update_version_info;
     $app->t_load;
     $app->t_pod;
     $app->generate_readme;
@@ -36,7 +35,7 @@ elsif($action eq 'build') {
     $app->generate_readme;
     $app->manifest;
     $app->tag_and_commit;
-    $app->_vsystem('rm ' .$app->name .'* 2>/dev/null');
+    eval { $app->_system('rm ' .$app->name .'* 2>/dev/null') }; # don't care if this fail
     $app->make('dist');
 }
 elsif($action eq 'share') {

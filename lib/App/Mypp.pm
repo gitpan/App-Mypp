@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.10
+0.11
 
 =head1 DESCRIPTION
 
@@ -133,12 +133,15 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.10';
-our $SILENT = $ENV{'SILENT'} || 0;
+our $VERSION = eval '0.11';
+our $SILENT = $ENV{'MYPP_SILENT'} || $ENV{'SILENT'} || 0;
 our $MAKEFILE_FILENAME = 'Makefile.PL';
 our $CHANGES_FILENAME = 'Changes';
 our $PAUSE_FILENAME = $ENV{'HOME'} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
+
+open my $OLDOUT, '>&STDOUT';
+open my $OLDERR, '>&STDERR';
 
 sub _from_config ($&) {
     my($name, $sub) = @_;
@@ -286,7 +289,7 @@ _attr changes => sub {
         open my $CHANGES, '>', $CHANGES_FILENAME or die "Write '$CHANGES_FILENAME': $!\n";
         printf $CHANGES "Revision history for %s\n\n0.00\n", $self->name;
         print $CHANGES " " x 7, "* Init repo\n\n";
-        print "Wrote $CHANGES_FILENAME\n";
+        $self->_log("Created $CHANGES_FILENAME");
     }
 
     open my $CHANGES, '<', $CHANGES_FILENAME or die "Read '$CHANGES_FILENAME': $!\n";
@@ -406,10 +409,6 @@ _attr perl5lib => sub {
         $inc = [ split /:/, $inc ];
     }
 
-    if($ENV{'PERL5LIB'}) {
-        warn 'perl5lib attribute is not set using PERL5LIB environment variable'
-    }
-
     return $inc;
 };
 
@@ -471,7 +470,7 @@ sub timestamp_to_changes {
     if($changes =~ s/\n($VERSION_RE)\s*$/{ sprintf "\n%-7s  %s", $1, $date }/em) {
         seek $CHANGES, 0, 0;
         print $CHANGES $changes;
-        print "Add timestamp '$date' to $CHANGES_FILENAME\n" unless $SILENT;
+        $self->_log("Add timestamp '$date' to $CHANGES_FILENAME");
         return 1;
     }
 
@@ -503,7 +502,7 @@ sub update_version_info {
         print $MODULE $top_module_text;
     }
 
-    print "Update version in '$top_module' to $version\n" unless $SILENT;
+    $self->_log("Update version in '$top_module' to $version");
 
     return 1;
 }
@@ -517,9 +516,7 @@ module.
 
 sub generate_readme {
     my $self = shift;
-    return $self->_vsystem(
-        sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README'
-    ) ? 0 : 1;
+    return $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
 }
 
 =head2 clean
@@ -529,23 +526,7 @@ Removes all files which should not be part of your repo.
 =cut
 
 sub clean {
-    my $self = shift;
-    my $name = $self->name;
-    $self->_vsystem('make clean 2>/dev/null');
-    $self->_vsystem(sprintf 'rm -r %s 2>/dev/null', join(' ',
-        "$name*",
-        qw(
-            blib/
-            inc/
-            Makefile
-            Makefile.old
-            MANIFEST*
-            META.yml
-            MYMETA.yml
-        ),
-    ));
-
-    return 1;
+    return $_[0]->make('reset');
 }
 
 =head2 makefile
@@ -594,7 +575,7 @@ sub makefile {
     print $MAKEFILE "auto_install;\n";
     print $MAKEFILE "WriteAll;\n";
 
-    print "Wrote $MAKEFILE_FILENAME\n" unless $SILENT;
+    $self->_log("Created $MAKEFILE_FILENAME");
 
     return 1;
 }
@@ -611,7 +592,7 @@ sub requires {
     my $prefix = $self->top_module_name;
     my %requires;
 
-    local @INC = ('lib', @INC);
+    local @INC = ('lib', grep { $_ ne 'lib' } @INC);
 
     finddepth({
         no_chdir => 1,
@@ -729,7 +710,7 @@ sub manifest {
                            ^MANIFEST.*
                        ), $self->name;
 
-    $self->make('manifest') and die "Execute 'make manifest' failed\n";
+    $self->make('manifest');
 
     return 1;
 }
@@ -744,8 +725,9 @@ make script, and then execute C<make $what>.
 sub make {
     my $self = shift;
     $self->makefile unless(-e $MAKEFILE_FILENAME);
-    $self->_vsystem(perl => $MAKEFILE_FILENAME) unless(-e 'Makefile');
-    $self->_vsystem(make => @_);
+    $self->_system(perl => $MAKEFILE_FILENAME) unless(-e 'Makefile');
+    $self->_system(make => @_);
+    return 1;
 }
 
 =head2 tag_and_commit
@@ -756,8 +738,16 @@ Commits with the text from C<Changes> and create a tag.
 
 sub tag_and_commit {
     my $self = shift;
-    $self->_vsystem(git => commit => -a => -m => $self->changes->{'text'});
-    $self->_vsystem(git => tag => $self->changes->{'version'});
+
+    $self->_system(git => commit => -a => -m => $self->changes->{'text'});
+
+    eval {
+        $self->_system(git => tag => $self->changes->{'version'});
+    } or do {
+        $self->_system(git => reset => 'HEAD^');
+        die 'Failed to create git tag ' .$self->changes->{'version'};
+    };
+
     return 1;
 }
 
@@ -774,8 +764,8 @@ sub share_via_git {
 
     chomp $branch;
 
-    $self->_vsystem(git => push => origin => $branch);
-    $self->_vsystem(git => push => '--tags' => 'origin');
+    $self->_system(git => push => origin => $branch);
+    $self->_system(git => push => '--tags' => 'origin');
 
     return 1;
 }
@@ -824,29 +814,12 @@ sub t_pod {
     my $coverage = -e 't/99-pod-coverage.t' ? 't/99-pod-coverage.t' : 't/00-pod-coverage.t';
     my $pod = -e 't/99-pod.t' ? 't/99-pod.t' : 't/00-pod.t';
 
-    mkdir 't';
-
-    unless(-e $coverage and !$force) {
-        open my $POD_COVERAGE, '>', $coverage or die "Write '$coverage': $!\n";
-        print $POD_COVERAGE $self->_t_header;
-        print $POD_COVERAGE <<'TEST';
-eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
-all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });
-TEST
-        print "Wrote $coverage\n" unless $SILENT;
+    if(!-e $coverage or $force) {
+        $self->_make_test($coverage, 'Test::Pod::Coverage', 'all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });');
     }
-
-    unless(-e $pod and !$force) {
-        open my $POD, '>', $pod or die "Write '$pod': $!\n";
-        print $POD $self->_t_header;
-        print $POD <<'TEST';
-eval 'use Test::Pod; 1' or plan skip_all => 'Test::Pod required';
-all_pod_files_ok();
-TEST
-        print "Wrote $pod\n" unless $SILENT;
+    if(!-e $pod or $force) {
+        $self->_make_test($pod, 'Test::Pod', 'all_pod_files_ok();');
     }
-
-    return 1;
 }
 
 =head2 t_load
@@ -857,39 +830,32 @@ Creates C<t/00-load.t>.
 
 sub t_load {
     my $self = shift;
-    my @modules;
+    my $force = shift || 0;
+    my $load = 't/00-load.t';
 
-    finddepth(sub {
-        return unless($File::Find::name =~ /\.pm$/);
-        $File::Find::name =~ s,.pm$,,;
-        $File::Find::name =~ s,lib/?,,;
-        $File::Find::name =~ s,/,::,g;
-        push @modules, $File::Find::name;
-    }, 'lib');
-
-    mkdir 't';
-    open my $USE_OK, '>', 't/00-load.t' or die "Write 't/00-load.t': $!\n";
-
-    print $USE_OK $self->_t_header;
-    printf $USE_OK "plan tests => %i;\n", int @modules;
-
-    for my $module (sort { $a cmp $b } @modules) {
-        printf $USE_OK "use_ok('%s');\n", $module;
+    if(!-e $load or $force) {
+        $self->_make_test($load, 'Test::Compile', 'all_pm_files_ok();');
     }
-
-    print "Wrote t/00-load.t\n" unless $SILENT;
 
     return 1;
 }
 
-sub _t_header {
-    my $self = shift;
+sub _make_test {
+    my($self, $file, $module, $pod) = @_;
+    my $code = "use $module;1";
     my @lib = ('lib', @{ $self->perl5lib });
 
-    return <<"HEADER";
-use lib qw(@lib);
-use Test::More;
-HEADER
+    mkdir 't' unless(-d 't');
+    open my $TEST, '>', $file or die "Write '$file': $!\n";
+    print $TEST "use lib qw(@lib);\n";
+    print $TEST "use Test::More;\n";
+    print $TEST "eval '$code' or plan skip_all => '$module required';\n";
+    print $TEST $pod;
+
+    $self->_log("Created $file");
+    warn "$code failed!" unless eval $code;
+
+    return 1;
 }
 
 =head2 help
@@ -915,10 +881,14 @@ sub help {
     return 2;
 }
 
-sub _vsystem {
-    shift; # shift off class/object
-    print "\$ @_\n" unless $SILENT;
-    return $SILENT ? system "@_ 1>/dev/null 2>/dev/null" : system @_;
+sub _system {
+    shift->_log("\$ @_");
+    open STDERR, '>', '/dev/null' if($SILENT);
+    open STDOUT, '>', '/dev/null' if($SILENT);
+    system @_ and die "system(@_) == $?";
+    open STDERR, '>&', $OLDERR if($SILENT);
+    open STDOUT, '>&', $OLDOUT if($SILENT);
+    return 1;
 }
 
 sub _filename_to_module {
@@ -941,6 +911,11 @@ sub _version_from_module {
     }
 
     return;
+}
+
+sub _log {
+    return if $SILENT;
+    print $_[1], "\n";
 }
 
 =head1 SEE ALSO
