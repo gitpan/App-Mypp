@@ -4,169 +4,98 @@ use lib q(lib);
 use Test::More;
 use App::Mypp;
 
--d '.git' or plan skip_all => 'cannot run test without .git repo';
-eval "use Catalyst::Devel; 1" or plan skip_all => 'Catalyst::Devel is required';
+$ENV{'PERL5LIB'} = Cwd::getcwd .'/lib';
 
-plan tests =>
-      1
-    + 10 # attributes
-    + 2 # requires
-    + 6 # timestamp_to_changes, update_version_info, generate_readme, clean
-    + 2 # MANIFEST
-    + 8 # makefile
-    + 3 # manifest
-    + 5 # t_load + t_pod
-    + 3 # pause_info
-    + 4 # share_via_extension
-    + 2 # git
-;
+-d '.git' or plan skip_all => 'cannot run test without .git repo';
+
+plan tests => 25;
 
 $App::Mypp::SILENT = 1;
 $App::Mypp::PAUSE_FILENAME = 'pause.info';
-$Foo::Share::Module::INPUT = 0; # Name "Foo::Share::Module::INPUT" used only once: possible typo
-my $app;
+my $app = bless {}, 'App::Mypp';
 
 chdir 't/my-test-project/' or die $!;
 
-eval {
-    $app = App::Mypp->new;
-    ok($app, 'App::Mypp instace constructed');
-} or BAIL_OUT 'Cannot construct object';
-
-eval { # attributes
+{
     is(ref $app->config, 'HASH', 'attr config is a hash ref');
     is($app->config->{'just_to_make_test_work'}, 42, 'attr config is read');
     is($app->name, 'My-Test-Project', 'attr name = My-Test-Project');
     is($app->top_module, 'lib/My/Test/Project.pm', 'attr top_module = lib/My/Test/Project.pm');
     is($app->top_module_name, 'My::Test::Project', 'attr top_module_name = My::Test::Project');
     is(ref $app->changes, 'HASH', 'attr changes is a hash ref');
-    like($app->changes->{'text'}, qr{^0\.01.*Init repo}s, 'changes->text is set');
-    is($app->changes->{'version'}, '0.01', 'changes->version is set');
-    is($app->dist_file, 'My-Test-Project-0.01.tar.gz', 'dist_file is set');
-    is(ref $app->_eval_package_requires, 'ARRAY', '_eval_package_requires returned ARRAY');
+    like($app->changes->{'text'}, qr{^42\.01.*Init repo}s, 'changes->text is set');
+    is($app->changes->{'version'}, '42.01', 'changes->version is set');
+    is($app->dist_file, 'My-Test-Project-42.01.tar.gz', 'dist_file is set');
 
-    1;
-} or diag "attributes failed: $@";
+    is($app->_got_parent_module('App::Mypp', { 'App' => $App::Mypp::VERSION }), 1, 'App::Mypp got parent module');
+    is($app->_got_parent_module('App::Mypp', { 'App' => 0 }), undef, 'App::Mypp does not have parent module');
+    is($app->_got_parent_module('App::Mypp', { 'App' => 42, 'App::Mypp' => 24 }), undef, 'App::Mypp does not have parent module');
 
-eval {
-    my %req;
+    is($app->_system('echo foo'), 1, 'echo foo');
+    eval { $app->_system('invalid-command-that-does-not-exists') };
+    like($@, qr{system\(invalid-command-that-does-not-exists\) == -1}, 'invalid-command-that-does-not-exists');
+    is($app->_git('branch'), 1, 'git branch');
+    eval { $app->_git('invalid') };
+    like($@, qr{system\(git invalid\) == 256}, 'git invalid');
+    is($app->_make('clean'), 1, 'make clean');
+    eval { $app->_make('invalid') };
+    like($@, qr{system\(make invalid\) == 512}, 'make invalid');
 
-    %req = $app->requires('lib');
-    is_deeply([sort keys %req], [qw/POSIX Symbol Tie::Hash base/], 'lib/ requires ok');
+    is_deeply(
+        [sort keys %{ $app->_templates }],
+        [
+            '.gitignore',
+            'Changes',
+            'MANIFEST.skip',
+            'Makefile.PL',
+            't/00-load.t',
+            't/00-pod-coverage.t',
+            't/00-pod.t',
+        ],
+        '_templates defined'
+    );
 
-    %req = $app->requires('t');
-    is_deeply([sort keys %req], [qw/Test::More/], 't/ requires ok');
-
-    1;
-} or diag "requires failed: $@";
-
-eval { # timestamp_to_changes, update_version_info, generate_readme, clean
-    my $date = qx/date/;
-    local $/;
-
-    $date =~ s/^(\w+\s\w+\s\w+).*\n+$/$1/;
-
-    ok($app->timestamp_to_changes, 'timestamp_to_changes() succeeded');
-    open my $CHANGES, '<', 'Changes' or die $!;
-    do { $_ = scalar <$CHANGES> };
-    like($_, qr{0\.01\s+$date\s}, 'Changes got timestamp');
-
-    ok($app->update_version_info, 'update_version_info() succeeded');
-    open my $MODULE, '<', $app->top_module or die $!;
-    do { $_ = scalar <$MODULE> };
-    like($_, qr{^0\.01}m, 'top module got new version');
-
-    ok($app->generate_readme, 'generate_readme() succeeded');
-    ok(-e 'README', 'README generated');
-    1;
-} or diag "timestamp_to_changes/update_version_info/generate_readme/clean failed: $@";
-
-TODO: { # MANIFEST
-    todo_skip 'Should MAINFEST get cleaned out?', 2;
-    open my $MANIFEST, '>', 'MANIFEST' or die $!;
-    print $MANIFEST "foo\n";
-    close $MANIFEST;
-    ok($app->clean, 'clean() succeeded'); # need more testing
-    ok(!-e 'MANIFEST', 'MANIFEST got cleaned');
+    like(
+        $app->_requires,
+        qr{requires q\(App::Mypp\).*requires q\(Applify\)}s,
+        'found deps'
+    );
 }
 
-eval { # makefile
-    local $INC{'Catalyst.pm'} = 1;
-    ok($app->makefile, 'makefile() succeeded');
-    ok(-e 'Makefile.PL', 'Makefile.PL created');
-    open my $MAKEFILE, '<', 'Makefile.PL' or die $!;
-    my $makefile = do { local $/; <$MAKEFILE> };
-    my $name = $app->name;
-    my $top_module = $app->top_module;
-    like($makefile, qr{name q\($name\)}, 'name is part of Makefile.PL');
-    like($makefile, qr{all_from q\($top_module\)}, 'all_from is part of Makefile.PL');
-    like($makefile, qr{bugtracker q\(http://rt.cpan.org/NoAuth/Bugs.html\?Dist=$name\);}, 'bugtracker is part of Makefile.PL');
-    like($makefile, qr{homepage q\(http://search.cpan.org/dist/$name\);}, 'homepage is part of Makefile.PL');
-    like($makefile, qr{catalyst;}, 'catalyst; is part of Makefile.PL');
-    like($makefile, qr{repository q\(git:.*\);}, 'repository is part of Makefile.PL');
-
-    1;
-} or diag "makefile failed: $@";
-
-eval { # manifest
-    ok($app->manifest, 'manifest() succeeded');
-    ok(-e 'MANIFEST', 'MANIFEST exists');
-    ok(-e 'MANIFEST.SKIP', 'MANIFEST.SKIP exists');
-} or diag "manifest failed: $@";
-
-unlink 'MANIFEST';
-unlink 'MANIFEST.SKIP';
-
-eval { # t_load + t_pod
-    ok($app->t_load, 't_load() succeeded');
-    ok(-e 't/00-load.t', 't/00-load.t created');
-    ok($app->t_pod, 't_load() succeeded');
-    ok(-e 't/00-pod.t', 't/00-pod.t created');
-    ok(-e 't/00-pod-coverage.t', 't/00-pod-coverage.t created');
-
-    1;
-} or diag "create test failed: $@";
-
-eval { # pause_info
-    is(ref $app->pause_info, 'HASH', 'pause_info is a hashref');
-    is($app->pause_info->{'user'}, 'john', 'pause_info->username is set');
-    is($app->pause_info->{'password'}, 's3cret', 'pause_info->password is set');
-
-    1;
-} or diag "pause info failed: $@";
-
-eval { # share_via_extension
-    is($app->share_extension, 'CPAN::Uploader', 'share_extension has default value');
-    local $ENV{'MYPP_SHARE_MODULE'} = 'Foo::Share::Module';
-    $app->{'share_extension'} = undef;
-    is($app->share_extension, 'Foo::Share::Module', 'share_extension has environment value');
-
-    $INC{'Foo/Share/Module.pm'} = 1;
-    eval '
-        package Foo::Share::Module;
-        our $INPUT = 1;
-        sub upload_file { $INPUT = [@_] }
-        1;
-    ' or die $@;
-
-    ok($app->share_via_extension, 'share_via_extension() succeeded');
-    is_deeply($Foo::Share::Module::INPUT, ['Foo::Share::Module', 'My-Test-Project-0.01.tar.gz'], 'Foo::Share::Module->upload_file was called');
-
-    1;
-} or diag "share: $@";
-
-TODO: { # git
-    todo_skip 'need to override git', 2;
-    $app->tag_and_commit;
-    $app->share_via_git;
+{
+    $app->_timestamp_to_changes;
+    open my $FH, '<', 'Changes' or die $!;
+    like(do { local $/; <$FH> }, qr/42\.01\s{4}\w+\s+\w+\s+\d{1,2}\s/, 'timestamp was added to Changes');
+    $app->_git(checkout => 'Changes');
 }
 
-$app->clean;
-system git => checkout => '.';
-system rm => -r => qw(
-    Makefile.PL
-    README
-    t/00-load.t
-    t/00-pod.t
-    t/00-pod-coverage.t
-);
+{
+    $app->_update_version_info;
+    open my $FH, '<', 'lib/My/Test/Project.pm' or die $!;
+    like(do { local $/; <$FH> }, qr/^42\.01.*/m, 'timestamp was added to Project.pm');
+}
+
+{
+    $app->_build;
+    ok(-e 'My-Test-Project-42.01.tar.gz', 'My-Test-Project-42.01.tar.gz') and $app->_git(reset => 'HEAD^');
+    ok(-e 'MANIFEST', 'MANIFEST created');
+    ok(-e 'README', 'README created');
+}
+
+END {
+    system git => tag => -d => '42.01';
+    system git => checkout => 'Changes';
+    system git => checkout => 'lib/My/Test/Project.pm';
+    unlink 'META.yml';
+    unlink 'MYMETA.json';
+    unlink 'MYMETA.yml';
+    unlink 'Makefile';
+    unlink 'Makefile.PL';
+    unlink 'Makefile.old';
+    unlink 'Changes.old';
+    unlink 'MANIFEST';
+    unlink 'MANIFEST.skip';
+    unlink 'README';
+    unlink 'My-Test-Project-42.01.tar.gz';
+    system rm => -rf => 'inc';
+}

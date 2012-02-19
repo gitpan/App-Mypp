@@ -1,5 +1,10 @@
 Revision history for App-Mypp
 
+0.12     Sun Feb 19 18:28:43 2012
+       * Rewrote mypp. Changed api and application switches
+       * Improved rollback on "build"
+       * Use Applify to set up application
+
 0.11     Fri Apr 29 21:45:27 CEST 2011
        * Fix "mypp update" does not update version in main module
        * Fix will execute "reset HEAD^" if "git tag" fail

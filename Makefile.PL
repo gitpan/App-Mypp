@@ -4,6 +4,7 @@ name q(App-Mypp);
 all_from q(lib/App/Mypp.pm);
 
 requires q(Cwd) => 3.3;
+requires q(Applify) => 0.01;
 requires q(File::Basename) => 2.7;
 requires q(File::Find) => 1.1;
 requires q(Test::Compile) => 0.11;

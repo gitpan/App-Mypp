@@ -7,15 +7,16 @@ My::Test::Project - can do stuff
 
 =head1 VERSION
 
-0.00
+42
 
 =cut
 
 use strict;
 use warnings;
-use POSIX;
-require Symbol;
-use base qw/Tie::Hash/;
+use Applify;
+use App::Mypp;
+
+our $VERSION = eval '42';
 
 =head1 AUTHOR
 

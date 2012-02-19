@@ -2,83 +2,53 @@ NAME
     App::Mypp - Maintain Your Perl Project
 
 VERSION
-    0.11
+    0.12
 
 DESCRIPTION
-    mypp is a result of me getting tired of doing the same stuff - or rather
-    forgetting to do the same stuff - for each of my Perl projects. mypp
-    does not feature the same things as Dist::Zilla, but I would like to
-    think of mypp vs dzil as cpanm vs CPAN - or at least that is what I'm
+    "mypp" is a result of me getting tired of doing the same stuff - or
+    rather forgetting to do the same stuff - for each of my Perl projects.
+    mypp does not feature the same things as Dist::Zilla, but I would like
+    to think of mypp vs dzil as cpanm vs CPAN - or at least that is what I'm
     aiming for. (!) What I don't want to do is configure anything, so 1) it
     should just work 2) it might not work as you want it to.
 
     Want to try it out? Run the line below in your favourite terminal:
 
-     wget -q http://github.com/jhthorsen/app-mypp/raw/master/script/mypp-packed -O - | perl -
+        wget -q http://github.com/jhthorsen/app-mypp/raw/master/script/mypp-packed -O - | perl -
 
     Running that line will start the experimental code from github - meaning
     the latest release. Run at own risk - and don't forget to put your files
     under version control first!
 
 SYNOPSIS
-     Usage mypp [option]
+    Actions are also available with out "--", such as "init", "update",
+    "test", "clean", "build" and "share".
 
-     -update
-      * Update version information in main module
-      * Create/update t/00-load.t and t/00-pod*t
-      * Create/update README
-
-     -test
-      * Create/update t/00-load.t and t/00-pod*t
-      * Test the project
-
-     -build
-      * Same as -update
-      * Update Changes with release date
-      * Create MANIFEST* and META.yml
-      * Tag and commit the changes (locally)
-      * Build a distribution (.tar.gz)
-
-     -share
-      * Push commit and tag to "origin"
-      * Upload the disted file to CPAN
-
-     -clean
-      * Remove files and directories which should not be included
-        in the project repo
-
-     -makefile
-      * Create "Makefile.PL" from plain guesswork
-
-     -changes
-      * Create "Changes" from template
-
-     -version
-      * Display the version number for for mypp
-
-     -man
-      * Display manual for mypp
+        mypp [action];
+        mypp --action;
+        mypp --force update Makefile.PL
+        mypp update t/00-load.t
 
 SAMPLE CONFIG FILE
-     ---
-     # Default to a converted version of top_module
-     name: Foo-Bar
- 
-     # Default to a converted version of the project folder
-     # Example: ./foo-bar/lib/Foo/Bar.pm, were "foo-bar" is the
-     # project folder.
-     top_module: lib/Foo/Bar.pm 
- 
-     # Default to a converted version of top_module.
-     top_module_name: Foo::Bar 
- 
-     # Default to CPAN::Uploader. Can also be set through
-     # MYPP_SHARE_MODULE environment variable.
-     share_extension: AnyModuleName
- 
-     # Not in use if share_extension == CPAN::Uploader. Usage:
-     # share_extension->upload_file($dist_file, share_params);
-     share_params: [ { answer: 42 } ]
+        ---
+        # Default to a converted version of top_module
+        name: Foo-Bar
+
+        # Default to a converted version of the project folder
+        # Example: ./foo-bar/lib/Foo/Bar.pm, were "foo-bar" is the
+        # project folder.
+        top_module: lib/Foo/Bar.pm
+
+        # Default to a converted version of top_module.
+        top_module_name: Foo::Bar
+
+        # Default to CPAN::Uploader. Can also be set through
+        # MYPP_SHARE_MODULE environment variable.
+        share_extension: AnyModuleName
+
+        # Not in use if share_extension == CPAN::Uploader. Usage:
+        # share_extension->upload_file($dist_file, share_params);
+        share_params: [ { answer: 42 } ]
 
     All config params are optional, since mypp tries to figure out the
     information for you.
@@ -87,32 +57,32 @@ SHARING THE MODULE
     By default the CPAN::Uploader module is used to upload the module to
     CPAN. This module uses "$HOME/.pause" to find login details:
 
-     user your_pause_username
-     password your_secret_pause_password
+        user your_pause_username
+        password your_secret_pause_password
 
     It also uses git to push changes and tag a new release:
 
-     git commit -a -m "$message_from_changes_file"
-     git tag "$latest_version_in_changes_file"
-     git push origin $current_branch
-     git push --tags origin
+        git commit -a -m "$message_from_changes_file"
+        git tag "$latest_version_in_changes_file"
+        git push origin $current_branch
+        git push --tags origin
 
     The commit and tagging is done with "-dist", while pushing the changes
     to origin is done with "-share".
 
-Changes
+CHANGES FILE
     The expected format in "Changes" is:
 
-     Some random header, for Example:
-     Revision history for Foo-Bar
+        Some random header, for Example:
+        Revision history for Foo-Bar
 
-     0.02
-      * Fix something
-      * Add something else
+        0.02
+           * Fix something
+           * Add something else
 
-     0.01 Tue Apr 20 19:34:15 CEST 2010
-      * First release
-      * Add some feature
+        0.01 Tue Apr 20 19:34:15 2010
+           * First release
+           * Add some feature
 
     "mypp" automatically adds the date before creating a dist.
 
@@ -125,6 +95,10 @@ ATTRIBUTES
   name
     Holds the project name. The project name is extracted from the
     "top_module", unless set in config file. Example: "foo-bar".
+
+  repository
+    Holds the project repository url. The url is extracted from the origin
+    git repo unless set.
 
   top_module
     Holds the top module location. This path is extracted from either "name"
@@ -144,10 +118,10 @@ ATTRIBUTES
   changes
     Holds the latest information from "Changes". Example:
 
-     {
-       text => qq(0.03 .... \n * Something has changed),
-       version => 0.03,
-     }
+        {
+            text => qq(0.03 .... \n * Something has changed),
+            version => 0.03,
+        }
 
   dist_file
     Returns the name of the target dist file.
@@ -156,10 +130,10 @@ ATTRIBUTES
     Holds information from "$HOME/.pause". See CPAN::Uploader for details.
     Example:
 
-     {
-       user => 'johndoe',
-       password => 's3cret',
-     }
+        {
+            user => 'johndoe',
+            password => 's3cret',
+        }
 
   share_extension
     Holds the classname of the module which should be used for sharing. This
@@ -170,73 +144,8 @@ ATTRIBUTES
     This attribute must hold an array ref, since it is flattened into a list
     when used as an argument to "share_extension"'s "upload_file()" method.
 
-  perl5lib
-    This attribute holds an array-ref of optional perl library search
-    directories. This attribute is used when setting up "use lib" in
-    generated files and will also be unshifted on @INC in "new()"
-
-    NOTE! This was set by "PERL5LIB" environment variable in prior versions,
-    but this is now deprecated.
-
-METHODS
-  new
-     $self = App::Mypp->new;
-
-    This is the object constructor.
-
-    Will use "perl5lib" to set up @INC, to search for libraries in optional
-    directories.
-
-  timestamp_to_changes
-    Inserts a timestamp in "Changes" on the first line looking like this:
-
-     ^\d+\.[\d_]+\s*$
-
-  update_version_info
-    Updates version in the top module, with the latest version from
-    "Changes".
-
-  generate_readme
-    Generates a "README" file from the plain old documentation in top
-    module.
-
-  clean
-    Removes all files which should not be part of your repo.
-
-  makefile
-    Creates a "Makefile.PL", unless it already exists.
-
-  requires(lib|t)
-    Searches for required modules in either the "lib/" or "t/" directory.
-
-  manifest
-    Creates "MANIFEST" and "MANIFEST.SKIP".
-
-  make($what);
-    Creates "Makefile.PL", unless it already exists, then run perl on the
-    make script, and then execute "make $what".
-
-  tag_and_commit
-    Commits with the text from "Changes" and create a tag.
-
-  share_via_git
-    Uses git to push changes and tags to "origin". The changes are pushed to
-    the currently active branch.
-
-  share_via_extension
-    Uses the "share_extension" module and upload the dist file.
-
-  t_pod
-    Create/update "t/99-pod-coverage.t" and "t/99-pod.t" or
-    "t/00-pod-coverage.t" and "t/00-pod.t".
-
-    (Doesn't make any sense to wait with the pod tests to step 99)
-
-  t_load
-    Creates "t/00-load.t".
-
-  help
-    Displays "SYNOPSIS".
+  force
+    Set by "--force"
 
 SEE ALSO
     *   App::Cpanminus

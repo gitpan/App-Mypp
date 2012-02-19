@@ -6,11 +6,11 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.11
+0.12
 
 =head1 DESCRIPTION
 
-mypp is a result of me getting tired of doing the same stuff - or
+C<mypp> is a result of me getting tired of doing the same stuff - or
 rather forgetting to do the same stuff - for each of my Perl projects.
 mypp does not feature the same things as L<Dist::Zilla>, but I would
 like to think of mypp vs dzil as cpanm vs CPAN - or at least that
@@ -19,7 +19,7 @@ anything, so 1) it should just work 2) it might not work as you want it to.
 
 Want to try it out? Run the line below in your favourite terminal:
 
- wget -q http://github.com/jhthorsen/app-mypp/raw/master/script/mypp-packed -O - | perl -
+    wget -q http://github.com/jhthorsen/app-mypp/raw/master/script/mypp-packed -O - | perl -
 
 Running that line will start the experimental code from github - meaning
 the latest release. Run at own risk - and don't forget to put your files
@@ -27,65 +27,35 @@ under version control first!
 
 =head1 SYNOPSIS
 
- Usage mypp [option]
+Actions are also available with out "--", such as "init", "update", "test",
+"clean", "build" and "share".
 
- -update
-  * Update version information in main module
-  * Create/update t/00-load.t and t/00-pod*t
-  * Create/update README
-
- -test
-  * Create/update t/00-load.t and t/00-pod*t
-  * Test the project
-
- -build
-  * Same as -update
-  * Update Changes with release date
-  * Create MANIFEST* and META.yml
-  * Tag and commit the changes (locally)
-  * Build a distribution (.tar.gz)
-
- -share
-  * Push commit and tag to "origin"
-  * Upload the disted file to CPAN
-
- -clean
-  * Remove files and directories which should not be included
-    in the project repo
-
- -makefile
-  * Create "Makefile.PL" from plain guesswork
-
- -changes
-  * Create "Changes" from template
-
- -version
-  * Display the version number for for mypp
-
- -man
-  * Display manual for mypp
+    mypp [action];
+    mypp --action;
+    mypp --force update Makefile.PL
+    mypp update t/00-load.t
 
 =head1 SAMPLE CONFIG FILE
 
- ---
- # Default to a converted version of top_module
- name: Foo-Bar
- 
- # Default to a converted version of the project folder
- # Example: ./foo-bar/lib/Foo/Bar.pm, were "foo-bar" is the
- # project folder.
- top_module: lib/Foo/Bar.pm 
- 
- # Default to a converted version of top_module.
- top_module_name: Foo::Bar 
- 
- # Default to CPAN::Uploader. Can also be set through
- # MYPP_SHARE_MODULE environment variable.
- share_extension: AnyModuleName
- 
- # Not in use if share_extension == CPAN::Uploader. Usage:
- # share_extension->upload_file($dist_file, share_params);
- share_params: [ { answer: 42 } ]
+    ---
+    # Default to a converted version of top_module
+    name: Foo-Bar
+
+    # Default to a converted version of the project folder
+    # Example: ./foo-bar/lib/Foo/Bar.pm, were "foo-bar" is the
+    # project folder.
+    top_module: lib/Foo/Bar.pm
+
+    # Default to a converted version of top_module.
+    top_module_name: Foo::Bar
+
+    # Default to CPAN::Uploader. Can also be set through
+    # MYPP_SHARE_MODULE environment variable.
+    share_extension: AnyModuleName
+
+    # Not in use if share_extension == CPAN::Uploader. Usage:
+    # share_extension->upload_file($dist_file, share_params);
+    share_params: [ { answer: 42 } ]
 
 All config params are optional, since mypp tries to figure out the
 information for you.
@@ -95,33 +65,33 @@ information for you.
 By default the L<CPAN::Uploader> module is used to upload the module to CPAN.
 This module uses C<$HOME/.pause> to find login details:
 
- user your_pause_username
- password your_secret_pause_password
+    user your_pause_username
+    password your_secret_pause_password
 
 It also uses git to push changes and tag a new release:
 
- git commit -a -m "$message_from_changes_file"
- git tag "$latest_version_in_changes_file"
- git push origin $current_branch
- git push --tags origin
+    git commit -a -m "$message_from_changes_file"
+    git tag "$latest_version_in_changes_file"
+    git push origin $current_branch
+    git push --tags origin
 
 The commit and tagging is done with C<-dist>, while pushing the changes to
 origin is done with C<-share>.
 
-=head1 Changes
+=head1 CHANGES FILE
 
 The expected format in C<Changes> is:
 
- Some random header, for Example:
- Revision history for Foo-Bar
+    Some random header, for Example:
+    Revision history for Foo-Bar
 
- 0.02
-  * Fix something
-  * Add something else
+    0.02
+       * Fix something
+       * Add something else
 
- 0.01 Tue Apr 20 19:34:15 CEST 2010
-  * First release
-  * Add some feature
+    0.01 Tue Apr 20 19:34:15 2010
+       * First release
+       * Add some feature
 
 C<mypp> automatically adds the date before creating a dist.
 
@@ -133,10 +103,8 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = eval '0.11';
+our $VERSION = eval '0.12';
 our $SILENT = $ENV{'MYPP_SILENT'} || $ENV{'SILENT'} || 0;
-our $MAKEFILE_FILENAME = 'Makefile.PL';
-our $CHANGES_FILENAME = 'Changes';
 our $PAUSE_FILENAME = $ENV{'HOME'} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
 
@@ -218,6 +186,19 @@ _from_config name => sub {
     return $name;
 };
 
+=head2 repository
+
+Holds the project repository url. The url is extracted from the origin git repo
+unless set.
+
+=cut
+
+_from_config repository => sub {
+    my $repo = (qx/git remote show -n origin/ =~ /URL: (.*)$/m)[0] || 'git://github.com/';
+    chomp $repo;
+    return $repo;
+};
+
 =head2 top_module
 
 Holds the top module location. This path is extracted from either
@@ -250,7 +231,7 @@ _from_config top_module => sub {
             }
         }
     }
-    
+
     unless(-f $path) {
         die "Cannot find top module from project name '$name': $path is not a plain file\n";
     }
@@ -266,18 +247,19 @@ C<Foo::Bar>.
 =cut
 
 _from_config top_module_name => sub {
-    my $self = shift;
-    return $self->_filename_to_module($self->top_module);
+    local $_ = $_[0]->top_module;
+    s,\.pm,,; s,^/?lib/,,g; s,/,::,g;
+    return $_;
 };
 
 =head2 changes
 
 Holds the latest information from C<Changes>. Example:
 
- {
-   text => qq(0.03 .... \n * Something has changed),
-   version => 0.03,
- }
+    {
+        text => qq(0.03 .... \n * Something has changed),
+        version => 0.03,
+    }
 
 =cut
 
@@ -285,14 +267,8 @@ _attr changes => sub {
     my $self = shift;
     my($text, $version);
 
-    unless(-e $CHANGES_FILENAME) {
-        open my $CHANGES, '>', $CHANGES_FILENAME or die "Write '$CHANGES_FILENAME': $!\n";
-        printf $CHANGES "Revision history for %s\n\n0.00\n", $self->name;
-        print $CHANGES " " x 7, "* Init repo\n\n";
-        $self->_log("Created $CHANGES_FILENAME");
-    }
-
-    open my $CHANGES, '<', $CHANGES_FILENAME or die "Read '$CHANGES_FILENAME': $!\n";
+    $self->_generate_file_from_template('Changes');
+    open my $CHANGES, '<', 'Changes' or die "Read Changes: $!\n";
 
     while(<$CHANGES>) {
         if($text) {
@@ -310,7 +286,7 @@ _attr changes => sub {
     }
 
     unless($text and $version) {
-        die "Could not find commit message nor version info from $CHANGES_FILENAME\n";
+        die "Could not find commit message nor version info from Changes\n";
     }
 
     return {
@@ -335,29 +311,21 @@ _attr dist_file => sub {
 Holds information from C<$HOME/.pause>. See L<CPAN::Uploader> for details.
 Example:
 
- {
-   user => 'johndoe',
-   password => 's3cret',
- }
+    {
+        user => 'johndoe',
+        password => 's3cret',
+    }
 
 =cut
 
 _attr pause_info => sub {
-    my $self = shift;
-    my $info;
-
     open my $PAUSE, '<', $PAUSE_FILENAME or die "Read $PAUSE_FILENAME: $!\n";
+    my %info = map { my($k, $v) = split /\s+/, $_, 2; chomp $v; ($k, $v) } <$PAUSE>;
 
-    while(<$PAUSE>) {
-        my($k, $v) = split /\s+/, $_, 2;
-        chomp $v;
-        $info->{$k} = $v;
-    }
+    $info{'user'} or die "'user <name>' is not set in $PAUSE_FILENAME\n";
+    $info{'password'} or die "'password <mysecret>' is not set in $PAUSE_FILENAME\n";
 
-    die "'user <name>' is not set in $PAUSE_FILENAME\n" unless $info->{'user'};
-    die "'password <mysecret>' is not set in $PAUSE_FILENAME\n" unless $info->{'password'};
-
-    return $info;
+    return \%info;
 };
 
 =head2 share_extension
@@ -387,396 +355,158 @@ _from_config share_params => sub {
     return;
 };
 
-=head2 perl5lib
+=head2 force
 
-This attribute holds an array-ref of optional perl library search
-directories. This attribute is used when setting up C<use lib> in
-generated files and will also be unshifted on C<@INC> in L</new()>
-
-NOTE! This was set by C<PERL5LIB> environment variable in prior versions,
-but this is now deprecated.
+Set by C<--force>
 
 =cut
 
-_attr perl5lib => sub {
-    my $self = shift;
-    my $inc = $self->config->{'perl5lib'};
+sub force { 0 }
 
-    if(!$inc) {
-        $inc = [];
+my %TEMPLATES;
+sub _templates {
+    unless(%TEMPLATES) {
+        my($key, $text);
+        while(<DATA>) {
+            if(/\%\% (\S+)/) {
+                $TEMPLATES{$key} = $text if($key);
+                $key = $1;
+                $text = '';
+            }
+            else {
+                $text .= $_;
+            }
+        }
+        $TEMPLATES{$key} = $text
     }
-    elsif(ref $inc ne 'ARRAY') {
-        $inc = [ split /:/, $inc ];
-    }
-
-    return $inc;
-};
-
-_attr _eval_package_requires => sub {
-    eval q(package __EVAL__;
-        no warnings "redefine";
-        our @REQUIRES;
-        sub use { push @REQUIRES, @_ }
-        sub require { push @REQUIRES, @_ }
-        sub base { push @REQUIRES, @_ }
-        sub extends { push @REQUIRES, @_ }
-        sub with { push @REQUIRES, @_ }
-        1;
-    ) or die $@;
-
-    return \@__EVAL__::REQUIRES;
-};
-
-=head1 METHODS
-
-=head2 new
-
- $self = App::Mypp->new;
-
-This is the object constructor.
-
-Will use L</perl5lib> to set up C<@INC>, to search for libraries in
-optional directories.
-
-=cut
-
-sub new {
-    my $class = shift;
-    my $self = bless {}, $class;
-
-    unshift @INC, @{ $self->perl5lib };
-
-    return $self;
+    return \%TEMPLATES;
 }
 
-=head2 timestamp_to_changes
-
-Inserts a timestamp in C<Changes> on the first line looking like this:
-
- ^\d+\.[\d_]+\s*$
-
-=cut
-
-sub timestamp_to_changes {
+sub _build {
     my $self = shift;
-    my $date = qx/date/; # ?!?
+    my(@rollback, $e);
+
+    $self->_make('reset');
+
+    eval {
+        $self->_update_version_info;
+        $self->_generate_file_from_template('MANIFEST.skip');
+        $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
+        eval { $self->_system('rm ' .$self->name .'* 2>/dev/null') }; # don't care if this fail
+
+        push @rollback, sub { rename 'Changes.old', 'Changes' };
+        $self->_timestamp_to_changes;
+
+        push @rollback, sub { $self->_git(reset => 'HEAD^') };
+        $self->_git(commit => -a => -m => $self->changes->{'text'});
+
+        push @rollback, sub { $self->_git(tag => -d => $self->changes->{'version'}) };
+        $self->_git(tag => $self->changes->{'version'});
+
+        $self->_make('manifest');
+        $self->_make('dist');
+        1;
+    } or do {
+        $e = $@ || 'Not sure what went wrong';
+        $_->() for reverse @rollback;
+        die $e;
+    };
+}
+
+sub _timestamp_to_changes {
+    my $self = shift;
+    my $date = localtime;
     my($changes, $pm);
 
-    chomp $date;
-
-    open my $CHANGES, '+<', $CHANGES_FILENAME or die "Read/write '$CHANGES_FILENAME': $!\n";
-    { local $/; $changes = <$CHANGES> };
+    rename 'Changes', 'Changes.old' or die $!;
+    open my $OLD, '<', 'Changes.old' or die "Read Changes.old: $!\n";
+    open my $NEW, '>', 'Changes' or die "Write Changes: $!\n";
+    { local $/; $changes = <$OLD> };
 
     if($changes =~ s/\n($VERSION_RE)\s*$/{ sprintf "\n%-7s  %s", $1, $date }/em) {
-        seek $CHANGES, 0, 0;
-        print $CHANGES $changes;
-        $self->_log("Add timestamp '$date' to $CHANGES_FILENAME");
+        print $NEW $changes;
+        $self->_log("Add timestamp '$date' to Changes");
         return 1;
     }
 
-    die "Unable to update $CHANGES_FILENAME with timestamp\n";
+    die "Unable to update Changes with timestamp\n";
 }
 
-=head2 update_version_info
-
-Updates version in the top module, with the latest version from C<Changes>.
-
-=cut
-
-sub update_version_info {
+sub _update_version_info {
     my $self = shift;
     my $top_module = $self->top_module;
     my $version = $self->changes->{'version'};
     my $top_module_text;
 
-    {
-        open my $MODULE, '<', $top_module or die "Read '$top_module': $!\n";
-        { local $/; $top_module_text = <$MODULE> };
-    }
+    open my $MODULE, '+<', $top_module or die "Read/write $top_module: $!\n";
+    { local $/; $top_module_text = <$MODULE> }
+    seek $MODULE, 0, 0;
 
     $top_module_text =~ s/=head1 VERSION.*?\n=/=head1 VERSION\n\n$version\n\n=/s;
     $top_module_text =~ s/^((?:our)?\s*\$VERSION)\s*=.*$/$1 = eval '$version';/m;
 
-    {
-        open my $MODULE, '>', $top_module or die "Write '$top_module': $!\n";
-        print $MODULE $top_module_text;
-    }
-
-    $self->_log("Update version in '$top_module' to $version");
+    print $MODULE $top_module_text;
+    $self->_log("Update version in $top_module to $version");
 
     return 1;
 }
 
-=head2 generate_readme
-
-Generates a C<README> file from the plain old documentation in top
-module.
-
-=cut
-
-sub generate_readme {
+sub _requires {
     my $self = shift;
-    return $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
+    my(%requires, %test_requires, @requires, $corelist);
+    my $wanted = sub {
+                    return if(!-f $_);
+                    return if(/\.swp/);
+                    open my $REQ, '-|', "$^X -MApp::Mypp::ShowINC '$_' 2>/dev/null";
+                    while(<$REQ>) {
+                        my($m, $v) = split /=/;
+                        chomp $v;
+                        $_[0]->{$m} = $v unless($requires{$m});
+                    }
+                };
+
+    # required to skip core modules
+    eval "use Module::CoreList; 1" and $corelist = 1;
+
+    finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%requires) } }, 'bin') if(-d 'bin');
+    finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%requires) } }, 'lib');
+    finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%test_requires) } }, 't');
+
+    for my $m (sort keys %requires) {
+        my $v = $requires{$m};
+        next if($self->_got_parent_module($m, \%requires));
+        next if($corelist and Module::CoreList->first_release($m));
+        push @requires, $v ? "requires q($m) => $v;" : "# requires q($m) => ??;";
+    }
+
+    if(%test_requires) {
+        push @requires, '';
+    }
+
+    for my $m (sort keys %test_requires) {
+        my $v = $test_requires{$m};
+        next if($self->_got_parent_module($m, \%requires));
+        next if($corelist and Module::CoreList->first_release($m));
+        push @requires, $v ? "test_requires q($m) => $v;" : "# test_requires q($m) => ??;";
+    }
+
+    return join "\n", @requires;
 }
 
-=head2 clean
+sub _got_parent_module {
+    my($self, $module, $map) = @_;
 
-Removes all files which should not be part of your repo.
+    for my $m (keys %$map) {
+        next unless($map->{$m});
+        next unless($module =~ /^$m\::/);
+        next unless(!$map->{$module} or $map->{$module} eq $map->{$m});
+        return 1;
+    }
 
-=cut
-
-sub clean {
-    return $_[0]->make('reset');
+    return;
 }
 
-=head2 makefile
-
-Creates a C<Makefile.PL>, unless it already exists.
-
-=cut
-
-sub makefile {
-    my $self = shift;
-    my $name = $self->name;
-    my(%requires, $repo);
-
-    die "$MAKEFILE_FILENAME already exist\n" if(-e $MAKEFILE_FILENAME);
-
-    open my $MAKEFILE, '>', $MAKEFILE_FILENAME or die "Write '$MAKEFILE_FILENAME': $!\n";
-
-    printf $MAKEFILE "use inc::Module::Install;\n\n";
-    printf $MAKEFILE "name q(%s);\n", $self->name;
-    printf $MAKEFILE "all_from q(%s);\n", $self->top_module;
-
-    if(%requires = $self->requires('lib')) {
-        print $MAKEFILE "\n";
-    }
-    for my $name (sort keys %requires) {
-        printf $MAKEFILE "requires q(%s) => %s;\n", $name, $requires{$name};
-    }
-
-    if(%requires = $self->requires('t')) {
-        print $MAKEFILE "\n";
-    }
-    for my $name (sort keys %requires) {
-        printf $MAKEFILE "test_requires q(%s) => %s;\n", $name, $requires{$name};
-    }
-
-    $repo = (qx/git remote show -n origin/ =~ /URL: (.*)$/m)[0] || 'git://github.com/';
-    $repo =~ s#^[^:]+:#git://github.com/#;
-
-    print $MAKEFILE "\n";
-    print $MAKEFILE "bugtracker q(http://rt.cpan.org/NoAuth/Bugs.html?Dist=$name);\n";
-    print $MAKEFILE "homepage q(http://search.cpan.org/dist/$name);\n";
-    print $MAKEFILE "repository q($repo);\n";
-    print $MAKEFILE "\n";
-    print $MAKEFILE "catalyst;\n" if($INC{'Catalyst.pm'});
-    print $MAKEFILE "# install_script glob('bin/*');\n";
-    print $MAKEFILE "auto_install;\n";
-    print $MAKEFILE "WriteAll;\n";
-
-    $self->_log("Created $MAKEFILE_FILENAME");
-
-    return 1;
-}
-
-=head2 requires(lib|t)
-
-Searches for required modules in either the C<lib/> or C<t/> directory.
-
-=cut
-
-sub requires {
-    my $self = shift;
-    my $dir = shift;
-    my $prefix = $self->top_module_name;
-    my %requires;
-
-    local @INC = ('lib', grep { $_ ne 'lib' } @INC);
-
-    finddepth({
-        no_chdir => 1,
-        wanted => sub {
-            return if(!-f $_);
-            return if(/\.swp/);
-            return $self->_pm_requires($_ => \%requires) if(/\.pm$/);
-            return $self->_script_requires($_ => \%requires);
-        },
-    }, $dir);
-
-    for my $module (keys %requires) {
-        delete $requires{$module} if($module =~ /^$prefix/);
-    }
-
-    return %requires if(wantarray);
-    return \%requires;
-}
-
-sub _pm_requires {
-    my $self = shift;
-    my $file = shift;
-    my $requires = shift;
-    my $required_module = $self->_filename_to_module($file);
-    my @modules;
-
-    {
-        local $SIG{'__WARN__'} = sub { print $_[0] unless($_[0] =~ /\sredefined\sat/)};
-        local @INC = (sub {
-            my $module = $self->_filename_to_module(pop);
-            push @modules, $module if(caller(0) =~ /^$required_module/);
-        }, @INC);
-
-        eval "use $required_module (); 1" or warn $@;
-        return if($@);
-    }
-
-    if(my $meta = eval "$required_module\->meta") {
-        if($meta->isa('Class::MOP::Class')) {
-            my $roles = $meta->can('roles') ? $meta->roles : [];
-            push @modules, $meta->superclasses, map { split /\|/, $_->name } @$roles;
-        }
-        else {
-            push @modules, map { split /\|/, $_->name } @{ $meta->get_roles };
-        }
-    }
-    else {
-        push @modules, eval "\@$required_module\::ISA";
-    }
-
-    for my $m (@modules) {
-        my($module, $version) = $self->_version_from_module($m) or next;
-        $requires->{$module} = $version;
-    }
-
-    return 1;
-}
-
-sub _script_requires {
-    my $self = shift;
-    my $file = shift;
-    my $requires = shift;
-    my $modules = $self->_eval_package_requires;
-
-    open my $FH, '<', $file or die "Read $file: $!\n";
-
-    local @$modules = ();
-
-    while(<$FH>) {
-        if(/^\s*use \s ([A-Z]\S+) ;/x) {
-            eval "__EVAL__::use('$1');" or warn "$1 => $@";
-        }
-        elsif(/^\s*require \s ([A-Z]\S+) ;/x) {
-            eval "__EVAL__::require('$1');" or warn "$1 => $@";
-        }
-        elsif(/^\s*use \s (base .*) ;/x) {
-            eval "__EVAL__::$1;" or warn "$1 => $@";
-        }
-        elsif(/^\s*(extends [\(\s] .*)/x) {
-            eval "__EVAL__::$1;" or warn "$1 => $@";
-        }
-        elsif(/^\s*(with [\(\s] .*)/x) {
-            eval "__EVAL__::$1;" or warn "$1 => $@";
-        }
-    }
-
-    for my $m (@$modules) {
-        local $SIG{'__WARN__'} = sub { print $_[0] unless($_[0] =~ /\sredefined\sat/)};
-        eval "use $m (); 1" or warn $@;
-        my($module, $version) = $self->_version_from_module($m) or next;
-        $requires->{$module} = $version;
-    }
-
-    return 1;
-}
-
-=head2 manifest
-
-Creates C<MANIFEST> and C<MANIFEST.SKIP>.
-
-=cut
-
-sub manifest {
-    my $self = shift;
-
-    open my $SKIP, '>', 'MANIFEST.SKIP' or die "Write 'MANIFEST.SKIP': $!\n";
-    print $SKIP "$_\n" for qw(
-                           ^mypp.yml
-                           .git
-                           \.old
-                           \.swp
-                           ~$
-                           ^blib/
-                           ^Makefile$
-                           ^MANIFEST.*
-                       ), $self->name;
-
-    $self->make('manifest');
-
-    return 1;
-}
-
-=head2 make($what);
-
-Creates C<Makefile.PL>, unless it already exists, then run perl on the
-make script, and then execute C<make $what>.
-
-=cut
-
-sub make {
-    my $self = shift;
-    $self->makefile unless(-e $MAKEFILE_FILENAME);
-    $self->_system(perl => $MAKEFILE_FILENAME) unless(-e 'Makefile');
-    $self->_system(make => @_);
-    return 1;
-}
-
-=head2 tag_and_commit
-
-Commits with the text from C<Changes> and create a tag.
-
-=cut
-
-sub tag_and_commit {
-    my $self = shift;
-
-    $self->_system(git => commit => -a => -m => $self->changes->{'text'});
-
-    eval {
-        $self->_system(git => tag => $self->changes->{'version'});
-    } or do {
-        $self->_system(git => reset => 'HEAD^');
-        die 'Failed to create git tag ' .$self->changes->{'version'};
-    };
-
-    return 1;
-}
-
-=head2 share_via_git
-
-Uses git to push changes and tags to "origin". The changes are
-pushed to the currently active branch.
-
-=cut
-
-sub share_via_git {
-    my $self = shift;
-    my $branch = (qx/git branch/ =~ /\* (.*)$/m)[0];
-
-    chomp $branch;
-
-    $self->_system(git => push => origin => $branch);
-    $self->_system(git => push => '--tags' => 'origin');
-
-    return 1;
-}
-
-=head2 share_via_extension
-
-Uses the L</share_extension> module and upload the dist file.
-
-=cut
-
-sub share_via_extension {
+sub _share_via_extension {
     my $self = shift;
     my $file = $self->dist_file;
     my $share_extension = $self->share_extension;
@@ -785,10 +515,9 @@ sub share_via_extension {
 
     # might die...
     if($share_extension eq 'CPAN::Uploader') {
-        my $pause = $self->pause_info;
         $share_extension->upload_file($file, {
-            user => $pause->{'user'},
-            password => $pause->{'password'},
+            user => $self->pause_info->{'user'},
+            password => $self->pause_info->{'password'},
         });
     }
     else {
@@ -798,87 +527,21 @@ sub share_via_extension {
     return 1;
 }
 
+sub _generate_file_from_template {
+    my($self, $file) = @_;
+    my $content;
 
-=head2 t_pod
-
-Create/update C<t/99-pod-coverage.t> and C<t/99-pod.t> or
-C<t/00-pod-coverage.t> and C<t/00-pod.t>.
-
-(Doesn't make any sense to wait with the pod tests to step 99)
-
-=cut
-
-sub t_pod {
-    my $self = shift;
-    my $force = shift || 0;
-    my $coverage = -e 't/99-pod-coverage.t' ? 't/99-pod-coverage.t' : 't/00-pod-coverage.t';
-    my $pod = -e 't/99-pod.t' ? 't/99-pod.t' : 't/00-pod.t';
-
-    if(!-e $coverage or $force) {
-        $self->_make_test($coverage, 'Test::Pod::Coverage', 'all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });');
-    }
-    if(!-e $pod or $force) {
-        $self->_make_test($pod, 'Test::Pod', 'all_pod_files_ok();');
-    }
-}
-
-=head2 t_load
-
-Creates C<t/00-load.t>.
-
-=cut
-
-sub t_load {
-    my $self = shift;
-    my $force = shift || 0;
-    my $load = 't/00-load.t';
-
-    if(!-e $load or $force) {
-        $self->_make_test($load, 'Test::Compile', 'all_pm_files_ok();');
+    if(-e $file and !$self->force) {
+        $self->_log("$file already exists. (Skipping)");
+        return;
     }
 
-    return 1;
-}
-
-sub _make_test {
-    my($self, $file, $module, $pod) = @_;
-    my $code = "use $module;1";
-    my @lib = ('lib', @{ $self->perl5lib });
-
-    mkdir 't' unless(-d 't');
-    open my $TEST, '>', $file or die "Write '$file': $!\n";
-    print $TEST "use lib qw(@lib);\n";
-    print $TEST "use Test::More;\n";
-    print $TEST "eval '$code' or plan skip_all => '$module required';\n";
-    print $TEST $pod;
-
-    $self->_log("Created $file");
-    warn "$code failed!" unless eval $code;
-
-    return 1;
-}
-
-=head2 help
-
-Displays L</SYNOPSIS>.
-
-=cut
-
-sub help {
-    open my $POD, '<', __FILE__ or die "Could not open App::Mypp: $!\n";
-    my $print;
-
-    while(<$POD>) {
-        if($print) {
-            return 1 if(/^=\w+/);
-            print;
-        }
-        elsif(/=head1 SYNOPSIS/) {
-            $print = 1;
-        }
-    }
-
-    return 2;
+    $content = $self->_templates->{$file} or die "No such template defined: $file";
+    $content =~ s!\$\{(\w+)\}!{ $self->$1 }!ge;
+    mkdir dirname $file;
+    open my $FH, '>', $file or die "Write $file: $!";
+    print $FH $content;
+    $self->_log("$file was generated");
 }
 
 sub _system {
@@ -891,26 +554,16 @@ sub _system {
     return 1;
 }
 
-sub _filename_to_module {
-    local $_ = $_[1];
-    s,\.pm,,;
-    s,^/?lib/,,g;
-    s,/,::,g;
-    return $_;
+sub _git {
+    shift->_system(git => @_);
 }
 
-sub _version_from_module {
+sub _make {
     my $self = shift;
-    my $module = shift;
-
-    while($module) {
-        if(my $version = eval "\$$module\::VERSION") {
-            return($module, $version);
-        }
-        $module =~ s/::\w+$// or last;
-    }
-
-    return;
+    $self->_generate_file_from_template('Makefile.PL');
+    $self->_system(perl => 'Makefile.PL') unless(-e 'Makefile');
+    $self->_system(make => @_);
+    return 1;
 }
 
 sub _log {
@@ -941,7 +594,7 @@ Report bugs and issues at L<http://github.com/jhthorsen/app-mypp/issues>.
 Copyright 2007-2010 Jan Henning Thorsen, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself. 
+under the same terms as Perl itself.
 
 =head1 AUTHOR
 
@@ -950,3 +603,64 @@ Jan Henning Thorsen, C<jhthorsen at cpan.org>
 =cut
 
 1;
+__DATA__
+%% t/00-load.t ==============================================================
+use lib 'lib';
+use Test::More;
+eval 'use Test::Compile; 1' or plan skip_all => 'Test::Compile required';
+all_pm_files_ok();
+%% t/00-pod.t ===============================================================
+use lib 'lib';
+use Test::More;
+eval 'use Test::Pod; 1' or plan skip_all => 'Test::Pod required';
+all_pod_files_ok();
+%% t/00-pod-coverage.t ======================================================
+use lib 'lib';
+use Test::More;
+eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
+all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });
+%% MANIFEST.skip ============================================================
+^mypp.yml
+.git
+\.old
+\.swp
+~$
+^blib/
+^Makefile$
+^MANIFEST.*
+^${name}
+%% .gitignore ===============================================================
+/META.yml
+/MYMETA.*
+/blib/
+/inc/
+/pm_to_blib
+/MANIFEST
+/MANIFEST.bak
+/Makefile
+/Makefile.old
+*.old
+*.swp
+~$
+/${name}*tar.gz
+%% Changes ==================================================================
+Revision history for ${name}
+
+0.01
+       * Started project
+       * Add cool feature
+%% Makefile.PL ==============================================================
+use inc::Module::Install;
+
+name q(${name});
+all_from q(${top_module});
+
+${_requires}
+
+bugtracker q(http://rt.cpan.org/NoAuth/Bugs.html?Dist=${name});
+homepage q(https://metacpan.org/release/${name});
+repository q(${repository});
+
+# install_script glob('bin/*');
+auto_install;
+WriteAll;

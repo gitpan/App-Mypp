@@ -3,13 +3,14 @@ abstract: 'Maintain Your Perl Project'
 author:
   - '-2010 Jan Henning Thorsen, all rights reserved.'
 build_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.36
   Test::More: 0.9
   YAML::Tiny: 1.4
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.36
 distribution_type: module
-generated_by: 'Module::Install version 1.01'
+dynamic_config: 1
+generated_by: 'Module::Install version 1.04'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -20,6 +21,7 @@ no_index:
     - inc
     - t
 requires:
+  Applify: 0.01
   Cwd: 3.3
   File::Basename: 2.7
   File::Find: 1.1
@@ -30,4 +32,4 @@ resources:
   homepage: http://jhthorsen.github.com/app-mypp
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhthorsen/app-mypp.git
-version: 0.11
+version: 0.12
