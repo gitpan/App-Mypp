@@ -12,6 +12,7 @@ requires q(Test::Pod::Coverage) => 0.11;
 
 test_requires q(YAML::Tiny) => 1.4;
 test_requires q(Test::More) => 0.9;
+test_requires q(Module::Install) => 1.0;
 
 bugtracker q(http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp);
 homepage q(http://jhthorsen.github.com/app-mypp);

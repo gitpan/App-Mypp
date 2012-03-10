@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.13     Sat Mar 10 08:33:15 2012
+       * Tests require Module::Install
+
 0.12     Sun Feb 19 18:28:43 2012
        * Rewrote mypp. Changed api and application switches
        * Improved rollback on "build"

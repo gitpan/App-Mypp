@@ -4,13 +4,14 @@ author:
   - '-2010 Jan Henning Thorsen, all rights reserved.'
 build_requires:
   ExtUtils::MakeMaker: 6.36
+  Module::Install: 1
   Test::More: 0.9
   YAML::Tiny: 1.4
 configure_requires:
   ExtUtils::MakeMaker: 6.36
 distribution_type: module
 dynamic_config: 1
-generated_by: 'Module::Install version 1.04'
+generated_by: 'Module::Install version 1.06'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -32,4 +33,4 @@ resources:
   homepage: http://jhthorsen.github.com/app-mypp
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhthorsen/app-mypp.git
-version: 0.12
+version: 0.13
