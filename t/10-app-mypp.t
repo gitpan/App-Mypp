@@ -4,12 +4,11 @@ use lib q(lib);
 use Test::More;
 use App::Mypp;
 
-$ENV{'PERL5LIB'} = Cwd::getcwd .'/lib';
-
+$ENV{MYPP_TEST_WAS_RUN} = 0;
 -d '.git' or plan skip_all => 'cannot run test without .git repo';
 
-plan tests => 25;
-
+$ENV{PERL5LIB} = Cwd::getcwd .'/lib';
+$ENV{MYPP_TEST_WAS_RUN} = 1;
 $App::Mypp::SILENT = 1;
 $App::Mypp::PAUSE_FILENAME = 'pause.info';
 my $app = bless {}, 'App::Mypp';
@@ -18,13 +17,13 @@ chdir 't/my-test-project/' or die $!;
 
 {
     is(ref $app->config, 'HASH', 'attr config is a hash ref');
-    is($app->config->{'just_to_make_test_work'}, 42, 'attr config is read');
+    is($app->config->{just_to_make_test_work}, 42, 'attr config is read');
     is($app->name, 'My-Test-Project', 'attr name = My-Test-Project');
     is($app->top_module, 'lib/My/Test/Project.pm', 'attr top_module = lib/My/Test/Project.pm');
     is($app->top_module_name, 'My::Test::Project', 'attr top_module_name = My::Test::Project');
     is(ref $app->changes, 'HASH', 'attr changes is a hash ref');
-    like($app->changes->{'text'}, qr{^42\.01.*Init repo}s, 'changes->text is set');
-    is($app->changes->{'version'}, '42.01', 'changes->version is set');
+    like($app->changes->{text}, qr{^42\.01.*Init repo}s, 'changes->text is set');
+    is($app->changes->{version}, '42.01', 'changes->version is set');
     is($app->dist_file, 'My-Test-Project-42.01.tar.gz', 'dist_file is set');
 
     is($app->_got_parent_module('App::Mypp', { 'App' => $App::Mypp::VERSION }), 1, 'App::Mypp got parent module');
@@ -82,20 +81,24 @@ chdir 't/my-test-project/' or die $!;
     ok(-e 'README', 'README created');
 }
 
+done_testing;
+
 END {
-    system git => tag => -d => '42.01';
-    system git => checkout => 'Changes';
-    system git => checkout => 'lib/My/Test/Project.pm';
-    unlink 'META.yml';
-    unlink 'MYMETA.json';
-    unlink 'MYMETA.yml';
-    unlink 'Makefile';
-    unlink 'Makefile.PL';
-    unlink 'Makefile.old';
-    unlink 'Changes.old';
-    unlink 'MANIFEST';
-    unlink 'MANIFEST.skip';
-    unlink 'README';
-    unlink 'My-Test-Project-42.01.tar.gz';
-    system rm => -rf => 'inc';
+    if($ENV{MYPP_TEST_WAS_RUN}) {
+        system git => tag => -d => '42.01';
+        system git => checkout => 'Changes';
+        system git => checkout => 'lib/My/Test/Project.pm';
+        unlink 'META.yml';
+        unlink 'MYMETA.json';
+        unlink 'MYMETA.yml';
+        unlink 'Makefile';
+        unlink 'Makefile.PL';
+        unlink 'Makefile.old';
+        unlink 'Changes.old';
+        unlink 'MANIFEST';
+        unlink 'MANIFEST.skip';
+        unlink 'README';
+        unlink 'My-Test-Project-42.01.tar.gz';
+        system rm => -rf => 'inc';
+    }
 }

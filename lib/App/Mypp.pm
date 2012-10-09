@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.13
+0.1301
 
 =head1 DESCRIPTION
 
@@ -103,9 +103,9 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = eval '0.13';
-our $SILENT = $ENV{'MYPP_SILENT'} || $ENV{'SILENT'} || 0;
-our $PAUSE_FILENAME = $ENV{'HOME'} .'/.pause';
+our $VERSION = eval '0.1301';
+our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
+our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
 
 open my $OLDOUT, '>&STDOUT';
@@ -145,7 +145,7 @@ Holds the config from C<mypp.yml> or C<MYPP_CONFIG> environment variable.
 
 _attr config => sub {
     my $self = shift;
-    my $file = $ENV{'MYPP_CONFIG'} || 'mypp.yml';
+    my $file = $ENV{MYPP_CONFIG} || 'mypp.yml';
     my $config;
 
     return {} unless(-e $file);
@@ -215,7 +215,7 @@ Where "foo-bar" is the basename.
 
 _from_config top_module => sub {
     my $self = shift;
-    my $name = $self->config->{'name'} || basename getcwd;
+    my $name = $self->config->{name} || basename getcwd;
     my @path = split /-/, $name;
     my $path = 'lib';
     my $file;
@@ -303,7 +303,7 @@ Returns the name of the target dist file.
 
 _attr dist_file => sub {
     my $self = shift;
-    return sprintf '%s-%s.tar.gz', $self->name, $self->changes->{'version'};
+    return sprintf '%s-%s.tar.gz', $self->name, $self->changes->{version};
 };
 
 =head2 pause_info
@@ -322,8 +322,8 @@ _attr pause_info => sub {
     open my $PAUSE, '<', $PAUSE_FILENAME or die "Read $PAUSE_FILENAME: $!\n";
     my %info = map { my($k, $v) = split /\s+/, $_, 2; chomp $v; ($k, $v) } <$PAUSE>;
 
-    $info{'user'} or die "'user <name>' is not set in $PAUSE_FILENAME\n";
-    $info{'password'} or die "'password <mysecret>' is not set in $PAUSE_FILENAME\n";
+    $info{user} or die "'user <name>' is not set in $PAUSE_FILENAME\n";
+    $info{password} or die "'password <mysecret>' is not set in $PAUSE_FILENAME\n";
 
     return \%info;
 };
@@ -339,8 +339,8 @@ variable, or fallback to L<CPAN::Uploader>.
 _attr share_extension => sub {
     my $self = shift;
 
-    return $ENV{'MYPP_SHARE_MODULE'} if($ENV{'MYPP_SHARE_MODULE'});
-    return $self->config->{'share_extension'} if($self->config->{'share_extension'});
+    return $ENV{MYPP_SHARE_MODULE} if($ENV{MYPP_SHARE_MODULE});
+    return $self->config->{share_extension} if($self->config->{share_extension});
     return 'CPAN::Uploader';
 };
 
@@ -398,10 +398,10 @@ sub _build {
         $self->_timestamp_to_changes;
 
         push @rollback, sub { $self->_git(reset => 'HEAD^') };
-        $self->_git(commit => -a => -m => $self->changes->{'text'});
+        $self->_git(commit => -a => -m => $self->changes->{text});
 
-        push @rollback, sub { $self->_git(tag => -d => $self->changes->{'version'}) };
-        $self->_git(tag => $self->changes->{'version'});
+        push @rollback, sub { $self->_git(tag => -d => $self->changes->{version}) };
+        $self->_git(tag => $self->changes->{version});
 
         $self->_make('manifest');
         $self->_make('dist');
@@ -435,7 +435,7 @@ sub _timestamp_to_changes {
 sub _update_version_info {
     my $self = shift;
     my $top_module = $self->top_module;
-    my $version = $self->changes->{'version'};
+    my $version = $self->changes->{version};
     my $top_module_text;
 
     open my $MODULE, '+<', $top_module or die "Read/write $top_module: $!\n";
@@ -516,8 +516,8 @@ sub _share_via_extension {
     # might die...
     if($share_extension eq 'CPAN::Uploader') {
         $share_extension->upload_file($file, {
-            user => $self->pause_info->{'user'},
-            password => $self->pause_info->{'password'},
+            user => $self->pause_info->{user},
+            password => $self->pause_info->{password},
         });
     }
     else {

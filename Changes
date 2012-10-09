@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.1301   Tue Oct  9 20:22:59 2012
+       * Fix RT79493: Cannot run END{} block unless .git/ was found
+
 0.13     Sat Mar 10 08:33:15 2012
        * Tests require Module::Install
 
