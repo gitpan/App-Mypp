@@ -27,7 +27,7 @@ app {
         $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
     }
     elsif($self->test) {
-        $self->_make('reset');
+        $self->_make('clean');
         $self->_generate_file_from_template($_) for grep { m!^t/! } keys %{ $self->_templates };
         $self->_make('test');
     }
@@ -42,7 +42,7 @@ app {
         $self->_git(push => '--tags' => 'origin');
     }
     elsif($self->clean) {
-        $self->_make('reset');
+        $self->_make('clean');
     }
     else {
         $self->_script->print_help;

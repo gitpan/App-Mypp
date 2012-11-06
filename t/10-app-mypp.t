@@ -45,7 +45,7 @@ chdir 't/my-test-project/' or die $!;
         [
             '.gitignore',
             'Changes',
-            'MANIFEST.skip',
+            'MANIFEST.SKIP',
             'Makefile.PL',
             't/00-load.t',
             't/00-pod-coverage.t',

@@ -1,5 +1,9 @@
 Revision history for App-Mypp
 
+0.14     Tue Nov  6 11:12:34 2012
+       * Replace "reset" with "clean" to be compatible with ExtUtils::MakeMaker
+       * Rename MANIFEST.skip to MANIFEST.SKIP
+
 0.1301   Tue Oct  9 20:22:59 2012
        * Fix RT79493: Cannot run END{} block unless .git/ was found
 
@@ -40,7 +44,7 @@ Revision history for App-Mypp
        * Deprecated setting perl5lib attribute from the PERL5LIB
          environment variable.
 
-0.07_01
+0.07_01  Tue Nov  6 11:14:12 2012
        * Fix typo "Wrote t/t/99-pod-coverage.t"
 
 0.07     Sun May  9 00:26:14 CEST 2010

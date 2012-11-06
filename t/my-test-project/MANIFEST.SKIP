@@ -6,4 +6,4 @@
 ^blib/
 ^Makefile$
 ^MANIFEST.*
-^App-Mypp
+^My-Test-Project

@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.1301
+0.14
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = eval '0.1301';
+our $VERSION = eval '0.14';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -386,11 +386,11 @@ sub _build {
     my $self = shift;
     my(@rollback, $e);
 
-    $self->_make('reset');
+    $self->_make('clean');
 
     eval {
         $self->_update_version_info;
-        $self->_generate_file_from_template('MANIFEST.skip');
+        $self->_generate_file_from_template('MANIFEST.SKIP');
         $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
         eval { $self->_system('rm ' .$self->name .'* 2>/dev/null') }; # don't care if this fail
 
@@ -620,7 +620,7 @@ use lib 'lib';
 use Test::More;
 eval 'use Test::Pod::Coverage; 1' or plan skip_all => 'Test::Pod::Coverage required';
 all_pod_coverage_ok({ also_private => [ qr/^[A-Z_]+$/ ] });
-%% MANIFEST.skip ============================================================
+%% MANIFEST.SKIP ============================================================
 ^mypp.yml
 .git
 \.old
@@ -665,3 +665,4 @@ repository q(${repository});
 # install_script glob('bin/*');
 auto_install;
 WriteAll;
+ll;
