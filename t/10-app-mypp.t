@@ -4,12 +4,10 @@ use lib q(lib);
 use Test::More;
 use App::Mypp;
 
-$ENV{MYPP_TEST_WAS_RUN} = 0;
 -d '.git' or plan skip_all => 'cannot run test without .git repo';
 
 $ENV{PERL5LIB} = Cwd::getcwd .'/lib';
-$ENV{MYPP_TEST_WAS_RUN} = 1;
-$App::Mypp::SILENT = 1;
+$App::Mypp::SILENT = defined $ENV{MYPP_SILENT} ? $ENV{MYPP_SILENT} : 1;
 $App::Mypp::PAUSE_FILENAME = 'pause.info';
 my $app = bless {}, 'App::Mypp';
 
@@ -22,7 +20,7 @@ chdir 't/my-test-project/' or die $!;
     is($app->top_module, 'lib/My/Test/Project.pm', 'attr top_module = lib/My/Test/Project.pm');
     is($app->top_module_name, 'My::Test::Project', 'attr top_module_name = My::Test::Project');
     is(ref $app->changes, 'HASH', 'attr changes is a hash ref');
-    like($app->changes->{text}, qr{^42\.01.*Init repo}s, 'changes->text is set');
+    like($app->changes->{text}, qr{^42\.01.*Cool feature}s, 'changes->text is set');
     is($app->changes->{version}, '42.01', 'changes->version is set');
     is($app->dist_file, 'My-Test-Project-42.01.tar.gz', 'dist_file is set');
 
@@ -62,9 +60,13 @@ chdir 't/my-test-project/' or die $!;
 }
 
 {
+    my $text = $app->changes->{text};
     $app->_timestamp_to_changes;
     open my $FH, '<', 'Changes' or die $!;
     like(do { local $/; <$FH> }, qr/42\.01\s{4}\w+\s+\w+\s+\d{1,2}\s/, 'timestamp was added to Changes');
+    is $app->{changes}, undef, 'changes attr got cleared';
+    like $app->changes->{text}, qr/^42\.01\s{4}[^\n]+\n[^C]+Cool feature/s, 'changes->text is set';
+    is $app->_changes_to_commit_message, "Released version 42\.01\n\n       * Cool feature\n", 'commit message got extra line';
     $app->_git(checkout => 'Changes');
 }
 
@@ -84,7 +86,7 @@ chdir 't/my-test-project/' or die $!;
 done_testing;
 
 END {
-    if($ENV{MYPP_TEST_WAS_RUN}) {
+    unless($ENV{SKIP_CLEANUP}) {
         system git => tag => -d => '42.01';
         system git => checkout => 'Changes';
         system git => checkout => 'lib/My/Test/Project.pm';

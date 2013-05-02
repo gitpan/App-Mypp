@@ -7,7 +7,7 @@ My::Test::Project - can do stuff
 
 =head1 VERSION
 
-42
+42.00
 
 =cut
 
@@ -16,12 +16,14 @@ use warnings;
 use Applify;
 use App::Mypp;
 
-our $VERSION = eval '42';
+our $VERSION = eval '42.00';
 
 =head1 AUTHOR
 
 See L<App::Mypp>.
 
 =cut
+
+1;
 
 1;
