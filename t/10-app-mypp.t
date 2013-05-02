@@ -4,14 +4,13 @@ use lib q(lib);
 use Test::More;
 use App::Mypp;
 
+chdir 't/my-test-project/' or die $!;
 -d '.git' or plan skip_all => 'cannot run test without .git repo';
 
 $ENV{PERL5LIB} = Cwd::getcwd .'/lib';
 $App::Mypp::SILENT = defined $ENV{MYPP_SILENT} ? $ENV{MYPP_SILENT} : 1;
 $App::Mypp::PAUSE_FILENAME = 'pause.info';
 my $app = bless {}, 'App::Mypp';
-
-chdir 't/my-test-project/' or die $!;
 
 {
     is(ref $app->config, 'HASH', 'attr config is a hash ref');

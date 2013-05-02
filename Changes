@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.1501   Thu May  2 14:59:42 2013
+       * Fix test run
+
 0.15     Thu May  2 11:06:50 2013
        * Change commit message
 
