@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.16     Thu May  9 12:32:33 2013
+       * Remove eval from $VERSION
+
 0.1501   Thu May  2 14:59:42 2013
        * Fix test run
 
