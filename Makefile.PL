@@ -1,23 +1,27 @@
-use inc::Module::Install;
-
-name q(App-Mypp);
-all_from q(lib/App/Mypp.pm);
-
-requires q(Cwd) => 3.3;
-requires q(Applify) => 0.01;
-requires q(File::Basename) => 2.7;
-requires q(File::Find) => 1.1;
-requires q(Test::Compile) => 0.11;
-requires q(Test::Pod::Coverage) => 0.11;
-
-test_requires q(YAML::Tiny) => 1.4;
-test_requires q(Test::More) => 0.9;
-test_requires q(Module::Install) => 1.0;
-
-bugtracker q(http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp);
-homepage q(http://jhthorsen.github.com/app-mypp);
-repository q(git://github.com/jhthorsen/app-mypp.git);
-
-install_script q(bin/mypp);
-auto_install;
-WriteAll;
+use ExtUtils::MakeMaker;
+WriteMakefile(
+  NAME => 'App-Mypp',
+  ABSTRACT_FROM => 'lib/App/Mypp.pm',
+  VERSION_FROM => 'lib/App/Mypp.pm',
+  AUTHOR => 'Jan Henning Thorsen <jhthorsen@cpan.org>',
+  LICENSE => 'perl',
+  PREREQ_PM => {
+    'Applify' => '0.0501',
+  },
+  BUILD_REQUIRES => {
+    'App::Mypp' => '0.16',
+  },
+  META_MERGE => {
+    resources => {
+      license => 'http://dev.perl.org/licenses/',
+      homepage => 'https://metacpan.org/release/App-Mypp',
+      bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp',
+      repository => 'git@github.com:jhthorsen/app-mypp.git',
+     #MailingList => 'some-mailing@list.org',
+    },
+  },
+  test => {
+    TESTS => 't/*.t',
+  },
+  EXE_FILES => ['bin/mypp'],
+);

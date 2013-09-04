@@ -21,7 +21,7 @@ CHECK {
     for my $m (keys %INC) {
         $m =~ s!/!::!g;
         $m =~ s!\.pm$!!;
-        next if($m eq __PACKAGE__);
+        next if $m eq __PACKAGE__;
         printf "%s=%s\n", $m, eval { $m->VERSION } || '0';
     }
     die '%INC was printed'

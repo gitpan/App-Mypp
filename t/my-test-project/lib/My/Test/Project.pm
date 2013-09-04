@@ -25,5 +25,3 @@ See L<App::Mypp>.
 =cut
 
 1;
-
-1;

@@ -13,6 +13,20 @@ documentation 'App::Mypp';
 version 'App::Mypp';
 extends 'App::Mypp';
 
+sub die_on_old_test_structure {
+  die <<'NOTICE' unless $ENV{MYPP_KEEP_OLD_STRUCTURE}
+
+You have an old t/ structure with 00-load.t, 00-pod.t and 00-pod-coverage.t
+
+You should probably convert to t/00-basic.t. Do so by deleting the old
+00-xxx.t tests and run "mypp" again.
+
+You can also disable this message by setting the MYPP_KEEP_OLD_STRUCTURE
+environment variable to true.
+
+NOTICE
+}
+
 app {
     my $self = shift;
     my $action = shift || '__UNDEF__';
@@ -27,8 +41,13 @@ app {
         $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
     }
     elsif($self->test) {
+        if(-e 't/00-load.t') {
+          $self->die_on_old_test_structure;
+        }
+        else {
+          $self->_generate_file_from_template('t/00-basic.t');
+        }
         $self->_make('clean');
-        $self->_generate_file_from_template($_) for grep { m!^t/! } keys %{ $self->_templates };
         $self->_make('test');
     }
     elsif($self->build) {
@@ -43,10 +62,13 @@ app {
     }
     elsif($self->clean) {
         $self->_make('clean');
+        unlink 'Makefile.old';
+        unlink 'META.yml';
+        unlink 'META.json';
     }
     else {
         $self->_script->print_help;
     }
- 
+
     return 0;
 };

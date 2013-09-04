@@ -1,17 +1,13 @@
 ---
 abstract: 'Maintain Your Perl Project'
 author:
-  - '-2010 Jan Henning Thorsen, all rights reserved.'
+  - 'Jan Henning Thorsen <jhthorsen@cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.36
-  Module::Install: 1
-  Test::More: 0.9
-  YAML::Tiny: 1.4
+  App::Mypp: 0.16
 configure_requires:
-  ExtUtils::MakeMaker: 6.36
-distribution_type: module
+  ExtUtils::MakeMaker: 0
 dynamic_config: 1
-generated_by: 'Module::Install version 1.06'
+generated_by: 'ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.131560'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -19,18 +15,12 @@ meta-spec:
 name: App-Mypp
 no_index:
   directory:
-    - inc
     - t
+    - inc
 requires:
-  Applify: 0.01
-  Cwd: 3.3
-  File::Basename: 2.7
-  File::Find: 1.1
-  Test::Compile: 0.11
-  Test::Pod::Coverage: 0.11
+  Applify: 0.0501
 resources:
   bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp
-  homepage: http://jhthorsen.github.com/app-mypp
+  homepage: https://metacpan.org/release/App-Mypp
   license: http://dev.perl.org/licenses/
-  repository: git://github.com/jhthorsen/app-mypp.git
-version: 0.16
+version: 0.17

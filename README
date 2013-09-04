@@ -2,7 +2,7 @@ NAME
     App::Mypp - Maintain Your Perl Project
 
 VERSION
-    0.16
+    0.17
 
 DESCRIPTION
     "mypp" is a result of me getting tired of doing the same stuff - or
@@ -27,7 +27,7 @@ SYNOPSIS
         mypp [action];
         mypp --action;
         mypp --force update Makefile.PL
-        mypp update t/00-load.t
+        mypp update t/00-basic.t
 
 SAMPLE CONFIG FILE
         ---

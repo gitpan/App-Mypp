@@ -1,5 +1,11 @@
 Revision history for App-Mypp
 
+0.17     Wed Sep  4 21:20:17 2013
+       * Add mypp clean will also remove Makefile.old and META*
+       * Replacing 00-xxx.t tests with 00-basic.t
+       * Replacing Module::Install with ExtUtils::MakeMaker
+       * Fix extra 1; at the end of top module file
+
 0.16     Thu May  9 12:32:33 2013
        * Remove eval from $VERSION
 
