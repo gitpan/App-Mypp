@@ -22,7 +22,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "App::Mypp" : "0.16"
+            "Test::More" : "0.90"
          }
       },
       "configure" : {
@@ -46,5 +46,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.17"
+   "version" : "0.1701"
 }

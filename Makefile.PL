@@ -9,7 +9,7 @@ WriteMakefile(
     'Applify' => '0.0501',
   },
   BUILD_REQUIRES => {
-    'App::Mypp' => '0.16',
+    'Test::More' => '0.90',
   },
   META_MERGE => {
     resources => {

@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.17
+0.1701
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.17';
+our $VERSION = '0.1701';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;

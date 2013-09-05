@@ -1,10 +1,10 @@
 {
    "abstract" : "Maintain Your Perl Project",
    "author" : [
-      "-2010 Jan Henning Thorsen, all rights reserved."
+      "Jan Henning Thorsen <jhthorsen@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Install version 1.06, CPAN::Meta::Converter version 2.131560",
+   "generated_by" : "ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.131560",
    "license" : [
       "perl_5"
    ],
@@ -15,19 +15,19 @@
    "name" : "App-Mypp",
    "no_index" : {
       "directory" : [
-         "inc",
-         "t"
+         "t",
+         "inc"
       ]
    },
    "prereqs" : {
       "build" : {
          "requires" : {
-            "App::Mypp" : "0.16"
+            "Test::More" : "0.90"
          }
       },
       "configure" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : "6.36"
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "runtime" : {
@@ -41,14 +41,10 @@
       "bugtracker" : {
          "web" : "http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp"
       },
-      "homepage" : "http://jhthorsen.github.com/app-mypp",
+      "homepage" : "https://metacpan.org/release/App-Mypp",
       "license" : [
          "http://dev.perl.org/licenses/"
-      ],
-      "repository" : {
-         "type" : "git",
-         "url" : "git://github.com/jhthorsen/app-mypp.git"
-      }
+      ]
    },
-   "version" : "0.16"
+   "version" : "0.1701"
 }

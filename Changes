@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.1701   Thu Sep  5 12:48:12 2013
+       * Fix RT#88427: Unresolvable self dependency
+
 0.17     Wed Sep  4 21:20:17 2013
        * Add mypp clean will also remove Makefile.old and META*
        * Replacing 00-xxx.t tests with 00-basic.t
