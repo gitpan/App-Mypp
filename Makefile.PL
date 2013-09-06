@@ -1,6 +1,6 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
-  NAME => 'App-Mypp',
+  NAME => 'App::Mypp',
   ABSTRACT_FROM => 'lib/App/Mypp.pm',
   VERSION_FROM => 'lib/App/Mypp.pm',
   AUTHOR => 'Jan Henning Thorsen <jhthorsen@cpan.org>',

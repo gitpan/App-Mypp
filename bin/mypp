@@ -62,9 +62,8 @@ app {
     }
     elsif($self->clean) {
         $self->_make('clean');
-        unlink 'Makefile.old';
-        unlink 'META.yml';
-        unlink 'META.json';
+        unlink $_ for qw( Changes.old Makefile.old MANIFEST META.json META.yml );
+        unlink $self->dist_file;
     }
     else {
         $self->_script->print_help;

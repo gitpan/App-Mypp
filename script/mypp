@@ -318,6 +318,9 @@ app {
     }
     elsif($self->clean) {
         $self->_make('clean');
+        unlink 'Makefile.old';
+        unlink 'META.yml';
+        unlink 'META.json';
     }
     else {
         $self->_script->print_help;
@@ -330,7 +333,7 @@ package App::Mypp;
 use Cwd;
 use File::Basename;
 use File::Find;
-our $VERSION = '0.16';
+our $VERSION = '0.1701';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -451,7 +454,7 @@ _attr share_extension => sub {
 _from_config share_params => sub {
     return;
 };
-sub force { 0 }
+sub force { shift->{force} || 0 }
 my %TEMPLATES;
 sub _templates {
     unless(%TEMPLATES) {
@@ -481,6 +484,8 @@ sub _build {
         eval { $self->_system('rm ' .$self->name .'* 2>/dev/null') }; # don't care if this fail
         push @rollback, sub { rename 'Changes.old', 'Changes' };
         $self->_timestamp_to_changes;
+        -e and $self->_git(add => $_) for qw/ Changes Makefile.PL README mypp.yml t /;
+        $self->_git(add => $self->top_module);
         push @rollback, sub { $self->_git(reset => 'HEAD^') };
         $self->_git(commit => -a => -m => $self->_changes_to_commit_message);
         push @rollback, sub { $self->_git(tag => -d => $self->changes->{version}) };
@@ -490,7 +495,8 @@ sub _build {
         1;
     } or do {
         $e = $@ || 'Not sure what went wrong';
-        $_->() for reverse @rollback;
+        eval { $_->() for reverse @rollback };
+        warn "ROLLBACK FAILED: $@" if $@;
         die $e;
     };
 }
@@ -519,22 +525,27 @@ sub _timestamp_to_changes {
     die "Unable to update Changes with timestamp\n";
 }
 sub _update_version_info {
-    my $self = shift;
-    my $top_module = $self->top_module;
-    my $version = $self->changes->{version};
-    my $top_module_text;
-    open my $MODULE, '+<', $top_module or die "Read/write $top_module: $!\n";
-    { local $/; $top_module_text = <$MODULE> }
-    seek $MODULE, 0, 0;
+  my $self = shift;
+  my $top_module = $self->top_module;
+  my $version = $self->changes->{version};
+  my $top_module_text;
+  {
+    open my $MODULE, '<', $top_module or die "Read $top_module: $!\n";
+    local $/;
+    $top_module_text = <$MODULE>;
     $top_module_text =~ s/=head1 VERSION.*?\n=/=head1 VERSION\n\n$version\n\n=/s;
     $top_module_text =~ s/^((?:our)?\s*\$VERSION)\s*=.*$/$1 = '$version';/m;
+  }
+  {
+    open my $MODULE, '>', $top_module or die "Write $top_module: $!\n";
     print $MODULE $top_module_text;
-    $self->_log("Update version in $top_module to $version");
-    return 1;
+  }
+  $self->_log("Update version in $top_module to $version");
+  return 1;
 }
 sub _project_requires {
   my($self, $what) = @_;
-  my(%run, %test, @run, @test, $corelist);
+  my(%run, %build, @run, @build, $corelist);
   my $wanted;
   if($self->{"requires_$what"}) {
     return $self->{"requires_$what"};
@@ -542,10 +553,10 @@ sub _project_requires {
   $wanted = sub {
     return if !-f $_;
     return if /\.swp/ ;
-    open my $REQ, '-|', "$^X -MApp::Mypp::ShowINC '$_' 2>/dev/null";
+    open my $REQ, '-|', "$^X -MApp::Mypp::ShowINC -c '$_' 2>/dev/null";
     while(<$REQ>) {
+      chomp;
       my($m, $v) = split /=/;
-      chomp $v;
       $_[0]->{$m} = $v unless $run{$m};
     }
   };
@@ -553,22 +564,22 @@ sub _project_requires {
   eval "use Module::CoreList; 1" and $corelist = 1;
   finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%run) } }, 'bin') if -d 'bin';
   finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%run) } }, 'lib');
-  finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%test) } }, 't');
+  finddepth({ no_chdir => 1, wanted => sub { $wanted->(\%build) } }, 't');
   for my $m (sort keys %run) {
-    my $v = $test{$m} || '0';
+    my $v = $run{$m} || '0';
     next if $self->_got_parent_module($m, \%run);
     next if $corelist and Module::CoreList->first_release($m);
     push @run, "    '$m' => '$v',\n";
   }
-  for my $m (sort keys %test) {
-    my $v = $test{$m} || '0';
+  for my $m (sort keys %build) {
+    my $v = $build{$m} || '0';
     next if $self->_got_parent_module($m, \%run);
     next if $corelist and Module::CoreList->first_release($m);
-    push @test, "    '$m' => '$v',\n";
+    push @build, "    '$m' => '$v',\n";
   }
   local $" = '';
   $self->{"requires_run"} = "@run";
-  $self->{"requires_test"} = "@test";
+  $self->{"requires_build"} = "@build";
   $self->{"requires_$what"};
 }
 sub _got_parent_module {
@@ -606,13 +617,18 @@ sub _generate_file_from_template {
         return;
     }
     $content = $self->_templates->{$file} or die "No such template defined: $file";
-    $content =~ s!<%= ([^=]+) =>!{ local $_ = eval($1); chomp; $_ }!ge;
+    $content =~ s!<%= ([^%]+) %>!{ local $_ = eval($1); warn "$1 => $@" if $@; chomp; $_ }!ge;
     mkdir dirname $file;
-    open my $FH, '>', $file or die "Write $file: $!";
-    print $FH $content;
+    $self->_write($file, $content);
     $self->_log("$file was generated");
 }
+sub _write {
+  my($self, $file, @data) = @_;
+  open my $FH, '>', $file or die "Write $file: $!";
+  print $FH @data;
+}
 sub _system {
+    local $_;
     shift->_log("\$ @_");
     open STDERR, '>', '/dev/null' if $SILENT;
     open STDOUT, '>', '/dev/null' if $SILENT;
@@ -700,7 +716,7 @@ WriteMakefile(
   NAME => '<%= $self->name %>',
   ABSTRACT_FROM => '<%= $self->top_module %>',
   VERSION_FROM => '<%= $self->top_module %>',
-  AUTHOR => '<%= qx{git config --get user.name} %><<%= qx{git config --get user.email} %>>',
+  AUTHOR => '<%= qx{git config --get user.name} %> <<%= qx{git config --get user.email} %>>',
   LICENSE => 'perl',
   PREREQ_PM => {
 <%= $self->_project_requires('run') %>

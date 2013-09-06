@@ -14,7 +14,7 @@ my $mypp = bless {}, 'App::Mypp';
     is $mypp->top_module, 'lib/App/Mypp.pm', 'attr top_module = lib/App/Mypp.pm';
     is $mypp->top_module_name, 'App::Mypp', 'attr top_module_name = App::Mypp';
     is ref $mypp->changes, 'HASH', 'attr changes is a hash ref';
-    like $mypp->changes->{text}, qr/^0\.\d{2,4}.*(?:Fix|Add)/s, 'changes->text is set';
+    like $mypp->changes->{text}, qr/^0\.\d{2,4}.*(?:Fix|Add|Will)/s, 'changes->text is set';
     like $mypp->changes->{version}, qr/^0\.\d{2,4}$/, 'changes->version is set';
     like $mypp->dist_file, qr/^App-Mypp-0\.\d{2,4}.tar.gz$/, 'dist_file is set';
 }

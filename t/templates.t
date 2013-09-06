@@ -53,7 +53,7 @@ for my $file (qw/ .gitignore MANIFEST.SKIP /) {
   $mypp->_generate_file_from_template('Makefile.PL');
 
   is int(split /\n/, $print[0]), 29, 'Makefile.PL contains x lines';
-  like "@print", qr{NAME => 'App-Mypp',}, "contains NAME => 'App-Mypp',";
+  like "@print", qr{NAME => 'App::Mypp',}, "contains NAME => 'App-Mypp',";
   like "@print", qr{ABSTRACT_FROM => 'lib/App/Mypp\.pm',}, "contains ABSTRACT_FROM => 'lib/App/Mypp.pm',";
   like "@print", qr{VERSION_FROM => 'lib/App/Mypp\.pm',}, "contains VERSION_FROM => 'lib/App/Mypp.pm',";
   like "@print", qr{AUTHOR => '[^<]+<[^>]+>',}, "contains author and email";

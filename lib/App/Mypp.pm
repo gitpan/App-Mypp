@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.1701
+0.1801
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.1701';
+our $VERSION = '0.1801';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -695,7 +695,7 @@ Revision history for <%= $self->name %>
 %% Makefile.PL ==============================================================
 use ExtUtils::MakeMaker;
 WriteMakefile(
-  NAME => '<%= $self->name %>',
+  NAME => '<%= $self->top_module_name %>',
   ABSTRACT_FROM => '<%= $self->top_module %>',
   VERSION_FROM => '<%= $self->top_module %>',
   AUTHOR => '<%= qx{git config --get user.name} %> <<%= qx{git config --get user.email} %>>',
