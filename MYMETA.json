@@ -44,7 +44,10 @@
       "homepage" : "https://metacpan.org/release/App-Mypp",
       "license" : [
          "http://dev.perl.org/licenses/"
-      ]
+      ],
+      "repository" : {
+         "url" : "https://github.com/jhthorsen/app-mypp"
+      }
    },
-   "version" : "0.1801"
+   "version" : "0.1802"
 }

@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.1802   Fri Sep  6 23:33:02 2013
+       * Fix repository url
+
 0.1801   Fri Sep  6 23:25:07 2013
        * Fix NAME in Makefile.PL
 

@@ -16,7 +16,7 @@ WriteMakefile(
       license => 'http://dev.perl.org/licenses/',
       homepage => 'https://metacpan.org/release/App-Mypp',
       bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp',
-      repository => 'git@github.com:jhthorsen/app-mypp.git',
+      repository => 'https://github.com/jhthorsen/app-mypp',
      #MailingList => 'some-mailing@list.org',
     },
   },

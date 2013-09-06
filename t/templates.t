@@ -62,6 +62,7 @@ for my $file (qw/ .gitignore MANIFEST.SKIP /) {
   like "@print", qr{license => 'http://dev\.perl\.org/licenses/',}, "contains license => 'http://dev.perl.org/licenses/',";
   like "@print", qr{homepage => 'https://metacpan\.org/release/App-Mypp',}, "contains homepage => 'https://metacpan.org/release/App-Mypp',";
   like "@print", qr{bugtracker => 'http://rt\.cpan\.org/NoAuth/Bugs\.html\?Dist=App-Mypp',}, "contains bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp',";
+  like "@print", qr{repository => 'https://github.com/jhthorsen/app-mypp',}, 'contains repository';
 }
 
 {

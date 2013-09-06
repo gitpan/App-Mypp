@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.1801
+0.1802
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.1801';
+our $VERSION = '0.1802';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -196,7 +196,8 @@ unless set.
 _from_config repository => sub {
     my $repo = (qx/git remote show -n origin/ =~ /URL: (.*)$/m)[0] || 'git://github.com/';
     chomp $repo;
-    return $repo;
+    $repo =~ s!git\@github\.com:(.*)!https://github.com/$1! and $repo =~ s!\.git$!!;
+    $repo;
 };
 
 =head2 top_module
