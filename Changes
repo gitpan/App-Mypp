@@ -1,12 +1,17 @@
 Revision history for App-Mypp
 
+0.19     Thu Nov 21 09:10:54 2013
+       * Change default bugtracker
+       * Fix unit tests
+       * Fix RT#89138 MYMETA.{yml,json} must not be bundled
+
 0.1802   Fri Sep  6 23:33:02 2013
        * Fix repository url
 
 0.1801   Fri Sep  6 23:25:07 2013
        * Fix NAME in Makefile.PL
 
-0.18
+0.18     Thu Nov 21 09:12:47 2013
        * Will also remove Changes.old, MANIFEST and dist file
 
 0.1701   Thu Sep  5 12:48:12 2013

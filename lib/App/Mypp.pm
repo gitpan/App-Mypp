@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.1802
+0.19
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.1802';
+our $VERSION = '0.19';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -148,7 +148,9 @@ _attr config => sub {
     my $file = $ENV{MYPP_CONFIG} || 'mypp.yml';
     my $config;
 
-    return {} unless(-e $file);
+    unless(-e $file) {
+        return {};
+    }
 
     eval "use YAML::Tiny; 1;" or do {
         die <<"ERROR";
@@ -164,7 +166,7 @@ ERROR
 
     $config = YAML::Tiny->read($file);
 
-    return $config->[0] if($config and $config->[0]);
+    return $config->[0] if $config and $config->[0];
     return {};
 };
 
@@ -194,8 +196,16 @@ unless set.
 =cut
 
 _from_config repository => sub {
-    my $repo = (qx/git remote show -n origin/ =~ /URL: (.*)$/m)[0] || 'git://github.com/';
-    chomp $repo;
+    my $self = shift;
+    my $repo = (qx( git remote show -n origin ) =~ /URL: (.*)$/m)[0];
+
+    if($repo and $repo =~ /github/) {
+      chomp $repo;
+    }
+    else {
+      $repo = lc sprintf 'https://github.com/%s/%s', $ENV{USER} || 'your-username', $self->name;
+    }
+
     $repo =~ s!git\@github\.com:(.*)!https://github.com/$1! and $repo =~ s!\.git$!!;
     $repo;
 };
@@ -711,9 +721,8 @@ WriteMakefile(
     resources => {
       license => 'http://dev.perl.org/licenses/',
       homepage => 'https://metacpan.org/release/<%= $self->name %>',
-      bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=<%= $self->name %>',
-      repository => '<%= $self->repository %>',
-     #MailingList => 'some-mailing@list.org',
+      bugtracker => '<%= $self->repository %>/issues',
+      repository => '<%= $self->repository %>.git',
     },
   },
   test => {

@@ -3,7 +3,13 @@ use warnings;
 use Test::More;
 use App::Mypp;
 
-my $mypp = bless {}, 'App::Mypp';
+plan skip_all => 'cannot execute t/bin/git' unless -x 't/bin/git';
+
+$ENV{USER} = "batman";
+$ENV{PATH} ||= "";
+$ENV{PATH} = "t/bin:$ENV{PATH}";
+
+my $mypp = bless { config => {}, top_module  => 'lib/Dummy/Module.pm' }, 'App::Mypp';
 my @print;
 
 {
@@ -46,23 +52,23 @@ for my $file (qw/ .gitignore MANIFEST.SKIP /) {
   $mypp->_generate_file_from_template('Changes');
 
   is int(split /\n/, $print[0]), 5, 'Changes contains x lines';
-  like "@print", qr{Revision history for App-Mypp}, 'contains Revision history for App-Mypp';
+  like "@print", qr{Revision history for Dummy-Module}, 'contains Revision history for Dummy-Module';
 }
 
 {
   $mypp->_generate_file_from_template('Makefile.PL');
 
-  is int(split /\n/, $print[0]), 29, 'Makefile.PL contains x lines';
-  like "@print", qr{NAME => 'App::Mypp',}, "contains NAME => 'App-Mypp',";
-  like "@print", qr{ABSTRACT_FROM => 'lib/App/Mypp\.pm',}, "contains ABSTRACT_FROM => 'lib/App/Mypp.pm',";
-  like "@print", qr{VERSION_FROM => 'lib/App/Mypp\.pm',}, "contains VERSION_FROM => 'lib/App/Mypp.pm',";
-  like "@print", qr{AUTHOR => '[^<]+<[^>]+>',}, "contains author and email";
+  is int(split /\n/, $print[0]), (@Sub::Name::EXPORT ? 28 : 27), 'Makefile.PL contains x lines';
+  like "@print", qr{NAME => 'Dummy::Module',}, "contains NAME => 'Dummy::Module',";
+  like "@print", qr{ABSTRACT_FROM => 'lib/Dummy/Module\.pm',}, "contains ABSTRACT_FROM => 'lib/Dummy/Module.pm',";
+  like "@print", qr{VERSION_FROM => 'lib/Dummy/Module\.pm',}, "contains VERSION_FROM => 'lib/Dummy/Module.pm',";
+  like "@print", qr{AUTHOR => 'Bruce Wayne <wayne\@industries>',}, "contains author and email";
   like "@print", qr{LICENSE => 'perl',}, "contains LICENSE => 'perl',";
   like "@print", qr{'Applify' => '\d+\.\d{2,4}',}, "contains 'Applify' => '...',";
   like "@print", qr{license => 'http://dev\.perl\.org/licenses/',}, "contains license => 'http://dev.perl.org/licenses/',";
-  like "@print", qr{homepage => 'https://metacpan\.org/release/App-Mypp',}, "contains homepage => 'https://metacpan.org/release/App-Mypp',";
-  like "@print", qr{bugtracker => 'http://rt\.cpan\.org/NoAuth/Bugs\.html\?Dist=App-Mypp',}, "contains bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-Mypp',";
-  like "@print", qr{repository => 'https://github.com/jhthorsen/app-mypp',}, 'contains repository';
+  like "@print", qr{homepage => 'https://metacpan\.org/release/Dummy-Module',}, "contains homepage => 'https://metacpan.org/release/Dummy-Module',";
+  like "@print", qr{bugtracker => 'https://github\.com/batman/dummy-module/issues',}, "contains bugtracker => 'https://github\.com/batman/dummy-module/issues";
+  like "@print", qr{repository => 'https://github\.com/batman/dummy-module\.git',}, 'contains repository';
 }
 
 {

@@ -4,6 +4,7 @@ use Test::More;
 use App::Mypp;
 
 plan skip_all => '.git dir is required' unless -d '.git';
+plan skip_all => 'YAML::Tiny is required' unless eval 'require YAML::Tiny; 1';
 
 my $mypp = bless {}, 'App::Mypp';
 

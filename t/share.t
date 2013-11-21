@@ -10,6 +10,8 @@ $App::Mypp::PAUSE_FILENAME = 't/pause.info';
 
 plan skip_all => 'PAUSE_FILENAME is required' unless -r $App::Mypp::PAUSE_FILENAME;
 
+$mypp->{config} = {}; # don't care about YAML::Tiny
+
 {
   is_deeply $mypp->pause_info, { user => 'john', password => 's3cret' }, 'got pause_info';
 
