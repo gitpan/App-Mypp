@@ -4,13 +4,14 @@ use Test::More;
 use App::Mypp;
 use Cwd;
 
+plan skip_all => 'Windows?' if $^O =~ /win/i;
+
 my $mypp = do 'bin/mypp';
 $App::Mypp::SILENT = defined $ENV{MYPP_SILENT} ? $ENV{MYPP_SILENT} : 1;
 $App::Mypp::PAUSE_FILENAME = 't/pause.info';
+$ENV{MYPP_CONFIG} = 't/file/does/not/exist'; # avoid config()
 
 plan skip_all => 'PAUSE_FILENAME is required' unless -r $App::Mypp::PAUSE_FILENAME;
-
-$mypp->{config} = {}; # don't care about YAML::Tiny
 
 {
   is_deeply $mypp->pause_info, { user => 'john', password => 's3cret' }, 'got pause_info';

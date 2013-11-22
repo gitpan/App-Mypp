@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.19
+0.1901
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,9 @@ use Cwd;
 use File::Basename;
 use File::Find;
 
-our $VERSION = '0.19';
+$ENV{HOME} ||= $ENV{USERPROFILE} || 'UNKNOWN';
+
+our $VERSION = '0.1901';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -231,17 +233,18 @@ _from_config top_module => sub {
     my $path = 'lib';
     my $file;
 
-    $path[-1] .= '.pm';
-
     for my $p (@path) {
         opendir my $DH, $path or die "Cannot find top module from project name '$name': $!\n";
         for my $f (readdir $DH) {
+            $f =~ s/\.pm$//;
             if(lc $f eq lc $p) {
                 $path = "$path/$f";
                 last;
             }
         }
     }
+
+    $path .= '.pm';
 
     unless(-f $path) {
         die "Cannot find top module from project name '$name': $path is not a plain file\n";

@@ -3,8 +3,10 @@ use warnings;
 use Test::More;
 use App::Mypp;
 
+plan skip_all => 'Windows?' if $^O =~ /win/i;
 plan skip_all => '.git dir is required' unless -d '.git';
 
+$ENV{MYPP_CONFIG} = 't/file/does/not/exist'; # avoid config()
 my $mypp = bless {}, 'App::Mypp';
 
 {

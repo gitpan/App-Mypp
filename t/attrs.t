@@ -5,6 +5,7 @@ use App::Mypp;
 
 plan skip_all => '.git dir is required' unless -d '.git';
 plan skip_all => 'YAML::Tiny is required' unless eval 'require YAML::Tiny; 1';
+plan skip_all => 'Windows?' if $^O =~ /win/i;
 
 my $mypp = bless {}, 'App::Mypp';
 

@@ -3,13 +3,15 @@ use warnings;
 use Test::More;
 use App::Mypp;
 
+plan skip_all => 'Windows?' if $^O =~ /win/i;
 plan skip_all => 'cannot execute t/bin/git' unless -x 't/bin/git';
 
 $ENV{USER} = "batman";
 $ENV{PATH} ||= "";
 $ENV{PATH} = "t/bin:$ENV{PATH}";
+$ENV{MYPP_CONFIG} = 't/file/does/not/exist'; # avoid config()
 
-my $mypp = bless { config => {}, top_module  => 'lib/Dummy/Module.pm' }, 'App::Mypp';
+my $mypp = bless { top_module => 'lib/Dummy/Module.pm' }, 'App::Mypp';
 my @print;
 
 {
@@ -58,7 +60,13 @@ for my $file (qw/ .gitignore MANIFEST.SKIP /) {
 {
   $mypp->_generate_file_from_template('Makefile.PL');
 
-  is int(split /\n/, $print[0]), (@Sub::Name::EXPORT ? 28 : 27), 'Makefile.PL contains x lines';
+  if(eval { require Sub::Name }) {
+    is int(split /\n/, $print[0]), 28, 'Makefile.PL contains 28 lines';
+  }
+  else {
+    is int(split /\n/, $print[0]), 27, 'Makefile.PL contains 27 lines';
+  }
+
   like "@print", qr{NAME => 'Dummy::Module',}, "contains NAME => 'Dummy::Module',";
   like "@print", qr{ABSTRACT_FROM => 'lib/Dummy/Module\.pm',}, "contains ABSTRACT_FROM => 'lib/Dummy/Module.pm',";
   like "@print", qr{VERSION_FROM => 'lib/Dummy/Module\.pm',}, "contains VERSION_FROM => 'lib/Dummy/Module.pm',";

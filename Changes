@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.1901   Fri Nov 22 08:28:10 2013
+       * Fix failing tests from smokers
+
 0.19     Thu Nov 21 09:10:54 2013
        * Change default bugtracker
        * Fix unit tests

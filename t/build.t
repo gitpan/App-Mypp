@@ -5,8 +5,12 @@ use File::Path ();
 use Test::More;
 use App::Mypp;
 
+plan skip_all => 'Windows?' if $^O =~ /win/i;
+
 my $work_dir = '/tmp/my-test-project';
 my $mypp = join '/', Cwd::getcwd, '/bin/mypp';
+
+$ENV{MYPP_CONFIG} = 't/file/does/not/exist'; # avoid config()
 $ENV{PERL5LIB} = join '/', Cwd::getcwd, '/lib';
 File::Path::rmtree($work_dir);
 
