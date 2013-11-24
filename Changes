@@ -1,5 +1,9 @@
 Revision history for App-Mypp
 
+0.20     Sun Nov 24 20:37:51 2013
+       * Will also init git and add .gitignore
+       * Will not print modules which does not have version to Makefile.PL
+
 0.1901   Fri Nov 22 08:28:10 2013
        * Fix failing tests from smokers
 

@@ -318,9 +318,8 @@ app {
     }
     elsif($self->clean) {
         $self->_make('clean');
-        unlink 'Makefile.old';
-        unlink 'META.yml';
-        unlink 'META.json';
+        unlink $_ for qw( Changes.old Makefile.old MANIFEST META.json META.yml );
+        unlink $self->dist_file;
     }
     else {
         $self->_script->print_help;
@@ -333,7 +332,8 @@ package App::Mypp;
 use Cwd;
 use File::Basename;
 use File::Find;
-our $VERSION = '0.1701';
+$ENV{HOME} ||= $ENV{USERPROFILE} || 'UNKNOWN';
+our $VERSION = '0.1901';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -359,7 +359,9 @@ _attr config => sub {
     my $self = shift;
     my $file = $ENV{MYPP_CONFIG} || 'mypp.yml';
     my $config;
-    return {} unless(-e $file);
+    unless(-e $file) {
+        return {};
+    }
     eval "use YAML::Tiny; 1;" or do {
         die <<"ERROR";
 YAML::Tiny is not installed, meaning '$file' will not be read.
@@ -369,7 +371,7 @@ Use one of the commands below to install it:
 ERROR
     };
     $config = YAML::Tiny->read($file);
-    return $config->[0] if($config and $config->[0]);
+    return $config->[0] if $config and $config->[0];
     return {};
 };
 _from_config name => sub {
@@ -381,9 +383,16 @@ _from_config name => sub {
     return $name;
 };
 _from_config repository => sub {
-    my $repo = (qx/git remote show -n origin/ =~ /URL: (.*)$/m)[0] || 'git://github.com/';
-    chomp $repo;
-    return $repo;
+    my $self = shift;
+    my $repo = (qx( git remote show -n origin ) =~ /URL: (.*)$/m)[0];
+    if($repo and $repo =~ /github/) {
+      chomp $repo;
+    }
+    else {
+      $repo = lc sprintf 'https://github.com/%s/%s', $ENV{USER} || 'your-username', $self->name;
+    }
+    $repo =~ s!git\@github\.com:(.*)!https://github.com/$1! and $repo =~ s!\.git$!!;
+    $repo;
 };
 _from_config top_module => sub {
     my $self = shift;
@@ -391,16 +400,17 @@ _from_config top_module => sub {
     my @path = split /-/, $name;
     my $path = 'lib';
     my $file;
-    $path[-1] .= '.pm';
     for my $p (@path) {
         opendir my $DH, $path or die "Cannot find top module from project name '$name': $!\n";
         for my $f (readdir $DH) {
+            $f =~ s/\.pm$//;
             if(lc $f eq lc $p) {
                 $path = "$path/$f";
                 last;
             }
         }
     }
+    $path .= '.pm';
     unless(-f $path) {
         die "Cannot find top module from project name '$name': $path is not a plain file\n";
     }
@@ -713,7 +723,7 @@ Revision history for <%= $self->name %>
 %% Makefile.PL ==============================================================
 use ExtUtils::MakeMaker;
 WriteMakefile(
-  NAME => '<%= $self->name %>',
+  NAME => '<%= $self->top_module_name %>',
   ABSTRACT_FROM => '<%= $self->top_module %>',
   VERSION_FROM => '<%= $self->top_module %>',
   AUTHOR => '<%= qx{git config --get user.name} %> <<%= qx{git config --get user.email} %>>',
@@ -728,9 +738,8 @@ WriteMakefile(
     resources => {
       license => 'http://dev.perl.org/licenses/',
       homepage => 'https://metacpan.org/release/<%= $self->name %>',
-      bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=<%= $self->name %>',
-      repository => '<%= $self->repository %>',
-     #MailingList => 'some-mailing@list.org',
+      bugtracker => '<%= $self->repository %>/issues',
+      repository => '<%= $self->repository %>.git',
     },
   },
   test => {

@@ -1,17 +1,21 @@
 use strict;
 use warnings;
-use Cwd;
 use File::Path ();
+use File::Basename;
 use Test::More;
+use Cwd qw( abs_path );
 use App::Mypp;
 
 plan skip_all => 'Windows?' if $^O =~ /win/i;
 
 my $work_dir = '/tmp/my-test-project';
-my $mypp = join '/', Cwd::getcwd, '/bin/mypp';
+my $home = dirname dirname abs_path __FILE__;
+my $mypp = "$home/bin/mypp";
+
+plan skip_all => 'Cannot run mypp' unless -x $mypp;
 
 $ENV{MYPP_CONFIG} = 't/file/does/not/exist'; # avoid config()
-$ENV{PERL5LIB} = join '/', Cwd::getcwd, '/lib';
+$ENV{PERL5LIB} = "$home/lib";
 File::Path::rmtree($work_dir);
 
 unless(eval 'require File::Copy::Recursive; 1') {

@@ -43,7 +43,7 @@ my @print;
 }
 
 for my $file (qw/ .gitignore MANIFEST.SKIP /) {
-  my $n = $file eq '.gitignore' ? 13 : 9;
+  my $n = $file eq '.gitignore' ? 13 : 10;
   $mypp->_generate_file_from_template($file);
 
   is int(split /\n/, $print[0]), $n, "$file contains x lines";

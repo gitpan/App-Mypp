@@ -6,7 +6,7 @@ App::Mypp - Maintain Your Perl Project
 
 =head1 VERSION
 
-0.1901
+0.20
 
 =head1 DESCRIPTION
 
@@ -105,7 +105,7 @@ use File::Find;
 
 $ENV{HOME} ||= $ENV{USERPROFILE} || 'UNKNOWN';
 
-our $VERSION = '0.1901';
+our $VERSION = '0.20';
 our $SILENT = $ENV{MYPP_SILENT} || $ENV{SILENT} || 0;
 our $PAUSE_FILENAME = $ENV{HOME} .'/.pause';
 our $VERSION_RE = qr/\d+ \. [\d_]+/x;
@@ -685,10 +685,11 @@ for my $file (@files) {
 ^blib/
 ^Makefile$
 ^MANIFEST.*
+^MYMETA.*
 ^<%= $self->name %>
 %% .gitignore ===============================================================
-/META.yml
-/MYMETA.*
+/META*
+/MYMETA*
 /blib/
 /inc/
 /pm_to_blib

@@ -24,4 +24,4 @@ resources:
   homepage: https://metacpan.org/release/App-Mypp
   license: http://dev.perl.org/licenses/
   repository: https://github.com/jhthorsen/app-mypp
-version: 0.1901
+version: 0.20

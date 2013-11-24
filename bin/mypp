@@ -36,9 +36,11 @@ app {
     }
 
     if(@{ $self->update } or $self->init) {
+        $self->_system(git => 'init');
         $self->update([keys %{ $self->_templates }]) unless(grep { /\w/ } @{ $self->update });
         $self->_generate_file_from_template($_) for reverse sort @{ $self->update };
         $self->_system(sprintf '%s %s > %s', 'perldoc -tT', $self->top_module, 'README');
+        $self->_system(qw( git add .gitignore Changes MANIFEST.SKIP ));
     }
     elsif($self->test) {
         if(-e 't/00-load.t') {
