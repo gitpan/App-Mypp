@@ -12,8 +12,6 @@ my $work_dir = '/tmp/my-test-project';
 my $home = dirname dirname abs_path __FILE__;
 my $mypp = "$home/bin/mypp";
 
-plan skip_all => 'Cannot run mypp' unless -x $mypp;
-
 $ENV{MYPP_CONFIG} = 't/file/does/not/exist'; # avoid config()
 $ENV{PERL5LIB} = "$home/lib";
 File::Path::rmtree($work_dir);
@@ -25,11 +23,17 @@ unless(File::Copy::Recursive::dircopy('t/my-test-project', $work_dir)) {
     plan skip_all => "Could not create $work_dir";
 }
 
-chdir $work_dir;
+unless(chdir $work_dir) {
+  plan skip_all => "chdir $work_dir: $!";
+}
+
 system git => 'init';
 
 unless(-d '.git') {
   plan skip_all => 'cannot run test without .git repo';
+}
+unless(-x $mypp) {
+  plan skip_all => 'Cannot run mypp';
 }
 
 $mypp = do $mypp;

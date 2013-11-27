@@ -1,5 +1,9 @@
 Revision history for App-Mypp
 
+0.2001   Wed Nov 27 09:27:13 2013
+       * Fix CPAN testers
+         perldoc -tT lib/My/Test/Project.pm > README == 256
+
 0.20     Sun Nov 24 20:37:51 2013
        * Will also init git and add .gitignore
        * Will not print modules which does not have version to Makefile.PL
