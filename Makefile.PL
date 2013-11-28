@@ -1,4 +1,26 @@
 use ExtUtils::MakeMaker;
+
+unless($ENV{FORCE_INSTALL}) {
+  eval "require File::Spec; 1" or die $@;
+  for my $dir (File::Spec->path, split /\,/, $ENV{Aliases}) {
+    $found = -x File::Spec->catfile($dir, 'git') and last;
+    $found = -x File::Spec->catfile($dir, 'git.exe') and last;
+  }
+  unless($found) {
+    warn <<"    MESSAGE";
+
+I searched and searched for "git" and "git.exe", but I could not
+find the executable. If you you know you got git installed, you
+can run the installer again with FORCE_INSTALL=1.
+
+NA: Unable to build distribution on this platform.
+
+    MESSAGE
+
+    exit 0;
+  }
+}
+
 WriteMakefile(
   NAME => 'App::Mypp',
   ABSTRACT_FROM => 'lib/App/Mypp.pm',

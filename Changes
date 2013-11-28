@@ -1,5 +1,8 @@
 Revision history for App-Mypp
 
+0.2002   Thu Nov 28 15:01:52 2013
+       * Fix failing test by skipping install on systems without "git"
+
 0.2001   Wed Nov 27 09:27:13 2013
        * Fix CPAN testers
          perldoc -tT lib/My/Test/Project.pm > README == 256
